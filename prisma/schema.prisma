@@ -11,3 +11,140 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model User {
+  id              String             @id @db.Uuid @default(dbgenerated("uuid_generate_v4()"))
+  username        String             @unique
+  email           String             @unique
+  passwordHash    String             @map("password_hash")
+  bio             String?
+  avatarUrl       String?            @map("avatar_url")
+  createdAt       DateTime           @default(now()) @db.Timestamptz(6) @map("created_at")
+  updatedAt       DateTime           @updatedAt @db.Timestamptz(6) @map("updated_at")
+
+  readingTrackings ReadingTracking[]
+  readingGoals     ReadingGoal[]
+  sentFriendRequests    FriendRequest[] @relation("sentRequests")
+  receivedFriendRequests FriendRequest[] @relation("receivedRequests")
+  friendships      Friendship[]       @relation("userFriendships")
+  friendOf         Friendship[]       @relation("friendFriendships")
+  hostedRooms      Room[]
+  roomMembers      RoomMember[]
+  roomReadingProgress RoomReadingProgress[]
+  comments         Comment[]
+}
+
+model Book {
+  id          String             @id @db.Uuid @default(dbgenerated("uuid_generate_v4()"))
+  title       String
+  author      String?
+  description String?
+  coverUrl    String?            @map("cover_url")
+  createdAt   DateTime           @default(now()) @db.Timestamptz(6) @map("created_at")
+
+  readingTrackings ReadingTracking[]
+  readingGoals     ReadingGoal[]
+  rooms            Room[]
+}
+
+model ReadingTracking {
+  id                   String   @id @db.Uuid @default(dbgenerated("uuid_generate_v4()"))
+  userId               String   @db.Uuid @map("user_id")
+  bookId               String   @db.Uuid @map("book_id")
+  readingTimeMinutes   Int?     @map("reading_time_minutes")
+  insight              String?
+  photoUrl             String?  @map("photo_url")
+  createdAt            DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+
+  user  User @relation(fields: [userId], references: [id])
+  book  Book @relation(fields: [bookId], references: [id])
+  roomReadingProgress RoomReadingProgress[]
+}
+
+model ReadingGoal {
+  id                String   @id @db.Uuid @default(dbgenerated("uuid_generate_v4()"))
+  userId            String   @db.Uuid @map("user_id")
+  bookId            String   @db.Uuid @map("book_id")
+  targetDate        DateTime? @map("target_date")
+  dailyTargetMinutes Int?     @map("daily_target_minutes")
+  createdAt         DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+  book Book @relation(fields: [bookId], references: [id])
+
+  @@unique([userId, bookId])
+}
+
+model FriendRequest {
+  id         String   @id @db.Uuid @default(dbgenerated("uuid_generate_v4()"))
+  senderId   String   @db.Uuid @map("sender_id")
+  receiverId String   @db.Uuid @map("receiver_id")
+  status     String?
+  createdAt  DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+
+  sender   User @relation("sentRequests", fields: [senderId], references: [id])
+  receiver User @relation("receivedRequests", fields: [receiverId], references: [id])
+}
+
+model Friendship {
+  id       String   @id @db.Uuid @default(dbgenerated("uuid_generate_v4()"))
+  userId   String   @db.Uuid @map("user_id")
+  friendId String   @db.Uuid @map("friend_id")
+  createdAt DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+
+  user   User @relation("userFriendships", fields: [userId], references: [id])
+  friend User @relation("friendFriendships", fields: [friendId], references: [id])
+
+  @@unique([userId, friendId])
+}
+
+model Room {
+  id        String   @id @db.Uuid @default(dbgenerated("uuid_generate_v4()"))
+  hostId    String   @db.Uuid @map("host_id")
+  bookId    String   @db.Uuid @map("book_id")
+  title     String?
+  createdAt DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+
+  host    User @relation(fields: [hostId], references: [id])
+  book    Book @relation(fields: [bookId], references: [id])
+  members RoomMember[]
+  progress RoomReadingProgress[]
+  comments Comment[]
+}
+
+model RoomMember {
+  id       String   @id @db.Uuid @default(dbgenerated("uuid_generate_v4()"))
+  roomId   String   @db.Uuid @map("room_id")
+  userId   String   @db.Uuid @map("user_id")
+  role     String?
+  joinedAt DateTime @default(now()) @db.Timestamptz(6) @map("joined_at")
+
+  room Room @relation(fields: [roomId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([roomId, userId])
+}
+
+model RoomReadingProgress {
+  id         String   @id @db.Uuid @default(dbgenerated("uuid_generate_v4()"))
+  roomId     String   @db.Uuid @map("room_id")
+  userId     String   @db.Uuid @map("user_id")
+  trackingId String   @db.Uuid @map("tracking_id")
+  createdAt  DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+
+  room     Room @relation(fields: [roomId], references: [id])
+  user     User @relation(fields: [userId], references: [id])
+  tracking ReadingTracking @relation(fields: [trackingId], references: [id])
+}
+
+model Comment {
+  id        String   @id @db.Uuid @default(dbgenerated("uuid_generate_v4()"))
+  roomId    String   @db.Uuid @map("room_id")
+  userId    String   @db.Uuid @map("user_id")
+  content   String?
+  chapter   String?
+  createdAt DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+
+  room Room @relation(fields: [roomId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+}
