@@ -1,11 +1,11 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -13,138 +13,92 @@ datasource db {
 }
 
 model User {
-  id              String             @id @db.Uuid @default(dbgenerated("uuid_generate_v4()"))
-  username        String             @unique
-  email           String             @unique
-  passwordHash    String             @map("password_hash")
-  bio             String?
-  avatarUrl       String?            @map("avatar_url")
-  createdAt       DateTime           @default(now()) @db.Timestamptz(6) @map("created_at")
-  updatedAt       DateTime           @updatedAt @db.Timestamptz(6) @map("updated_at")
+  id            String           @id @default(cuid())
+  email         String           @unique
+  username      String           @unique
+  password      String
+  firstName     String?          @map("first_name")
+  lastName      String?          @map("last_name")
+  isActive      Boolean          @default(true) @map("is_active")
+  avatarUrl     String?          @map("avatar_url")
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+  posts         Post[]
+  refreshTokens RefreshToken[]
+  roles         UserRole[]
+  permissions   UserPermission[]
 
-  readingTrackings ReadingTracking[]
-  readingGoals     ReadingGoal[]
-  sentFriendRequests    FriendRequest[] @relation("sentRequests")
-  receivedFriendRequests FriendRequest[] @relation("receivedRequests")
-  friendships      Friendship[]       @relation("userFriendships")
-  friendOf         Friendship[]       @relation("friendFriendships")
-  hostedRooms      Room[]
-  roomMembers      RoomMember[]
-  roomReadingProgress RoomReadingProgress[]
-  comments         Comment[]
+  @@map("users")
 }
 
-model Book {
-  id          String             @id @db.Uuid @default(dbgenerated("uuid_generate_v4()"))
-  title       String
-  author      String?
-  description String?
-  coverUrl    String?            @map("cover_url")
-  createdAt   DateTime           @default(now()) @db.Timestamptz(6) @map("created_at")
+model Role {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  permissions RolePermission[]
+  users       UserRole[]
 
-  readingTrackings ReadingTracking[]
-  readingGoals     ReadingGoal[]
-  rooms            Room[]
+  @@map("roles")
 }
 
-model ReadingTracking {
-  id                   String   @id @db.Uuid @default(dbgenerated("uuid_generate_v4()"))
-  userId               String   @db.Uuid @map("user_id")
-  bookId               String   @db.Uuid @map("book_id")
-  readingTimeMinutes   Int?     @map("reading_time_minutes")
-  insight              String?
-  photoUrl             String?  @map("photo_url")
-  createdAt            DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+model Permission {
+  id    String           @id @default(cuid())
+  name  String           @unique
+  roles RolePermission[]
+  users UserPermission[]
 
-  user  User @relation(fields: [userId], references: [id])
-  book  Book @relation(fields: [bookId], references: [id])
-  roomReadingProgress RoomReadingProgress[]
+  @@map("permissions")
 }
 
-model ReadingGoal {
-  id                String   @id @db.Uuid @default(dbgenerated("uuid_generate_v4()"))
-  userId            String   @db.Uuid @map("user_id")
-  bookId            String   @db.Uuid @map("book_id")
-  targetDate        DateTime? @map("target_date")
-  dailyTargetMinutes Int?     @map("daily_target_minutes")
-  createdAt         DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+model UserRole {
+  userId String @map("user_id")
+  roleId String @map("role_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
-  user User @relation(fields: [userId], references: [id])
-  book Book @relation(fields: [bookId], references: [id])
-
-  @@unique([userId, bookId])
+  @@id([userId, roleId])
+  @@map("user_roles")
 }
 
-model FriendRequest {
-  id         String   @id @db.Uuid @default(dbgenerated("uuid_generate_v4()"))
-  senderId   String   @db.Uuid @map("sender_id")
-  receiverId String   @db.Uuid @map("receiver_id")
-  status     String?
-  createdAt  DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+model RolePermission {
+  roleId       String     @map("role_id")
+  permissionId String     @map("permission_id")
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
-  sender   User @relation("sentRequests", fields: [senderId], references: [id])
-  receiver User @relation("receivedRequests", fields: [receiverId], references: [id])
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
 }
 
-model Friendship {
-  id       String   @id @db.Uuid @default(dbgenerated("uuid_generate_v4()"))
-  userId   String   @db.Uuid @map("user_id")
-  friendId String   @db.Uuid @map("friend_id")
-  createdAt DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+model UserPermission {
+  userId       String     @map("user_id")
+  permissionId String     @map("permission_id")
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
-  user   User @relation("userFriendships", fields: [userId], references: [id])
-  friend User @relation("friendFriendships", fields: [friendId], references: [id])
-
-  @@unique([userId, friendId])
+  @@id([userId, permissionId])
+  @@map("user_permissions")
 }
 
-model Room {
-  id        String   @id @db.Uuid @default(dbgenerated("uuid_generate_v4()"))
-  hostId    String   @db.Uuid @map("host_id")
-  bookId    String   @db.Uuid @map("book_id")
-  title     String?
-  createdAt DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
+model Post {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  published Boolean  @default(false)
+  authorId  String   @map("author_id")
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  host    User @relation(fields: [hostId], references: [id])
-  book    Book @relation(fields: [bookId], references: [id])
-  members RoomMember[]
-  progress RoomReadingProgress[]
-  comments Comment[]
+  @@map("posts")
 }
 
-model RoomMember {
-  id       String   @id @db.Uuid @default(dbgenerated("uuid_generate_v4()"))
-  roomId   String   @db.Uuid @map("room_id")
-  userId   String   @db.Uuid @map("user_id")
-  role     String?
-  joinedAt DateTime @default(now()) @db.Timestamptz(6) @map("joined_at")
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  room Room @relation(fields: [roomId], references: [id])
-  user User @relation(fields: [userId], references: [id])
-
-  @@unique([roomId, userId])
-}
-
-model RoomReadingProgress {
-  id         String   @id @db.Uuid @default(dbgenerated("uuid_generate_v4()"))
-  roomId     String   @db.Uuid @map("room_id")
-  userId     String   @db.Uuid @map("user_id")
-  trackingId String   @db.Uuid @map("tracking_id")
-  createdAt  DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
-
-  room     Room @relation(fields: [roomId], references: [id])
-  user     User @relation(fields: [userId], references: [id])
-  tracking ReadingTracking @relation(fields: [trackingId], references: [id])
-}
-
-model Comment {
-  id        String   @id @db.Uuid @default(dbgenerated("uuid_generate_v4()"))
-  roomId    String   @db.Uuid @map("room_id")
-  userId    String   @db.Uuid @map("user_id")
-  content   String?
-  chapter   String?
-  createdAt DateTime @default(now()) @db.Timestamptz(6) @map("created_at")
-
-  room Room @relation(fields: [roomId], references: [id])
-  user User @relation(fields: [userId], references: [id])
+  @@map("refresh_tokens")
 }

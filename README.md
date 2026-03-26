@@ -1,79 +1,164 @@
-# RumahBaca Backend
+<h1 align="center">A Production-Ready NestJS Boilerplate</h1>
 
-## Overview
+<div align="center">
 
-RumahBaca is a social reading platform backend built with NestJS, offering features such as tracking reading progress, setting reading goals, creating reading rooms, and discussing books with friends within a room.
+![NestJS](https://img.shields.io/badge/-NestJS-131821?style=for-the-badge&logo=nestjs)&nbsp;
+![Prisma](https://img.shields.io/badge/-Prisma-131821?style=for-the-badge&logo=prisma)&nbsp;
+![Bun](https://img.shields.io/badge/-Bun-131821?style=for-the-badge&logo=bun)&nbsp;
+![PostgreSQL](https://img.shields.io/badge/-PostgreSQL-131821?style=for-the-badge&logo=postgresql)&nbsp;
+![Docker](https://img.shields.io/badge/-Docker-131821?style=for-the-badge&logo=docker)&nbsp;
+![Redis](https://img.shields.io/badge/-Redis-131821?style=for-the-badge&logo=redis)&nbsp;
+![Swagger](https://img.shields.io/badge/-Swagger-131821?style=for-the-badge&logo=swagger)&nbsp;
+![S3](https://img.shields.io/badge/-S3-131821?style=for-the-badge&logo=minio)&nbsp;
+![OpenTelemetry](https://img.shields.io/badge/-OpenTelemetry-131821?style=for-the-badge&logo=opentelemetry)&nbsp;
+![Grafana](https://img.shields.io/badge/-Grafana-131821?style=for-the-badge&logo=grafana)&nbsp;
+![Loki](https://img.shields.io/badge/-Loki-131821?style=for-the-badge&logo=grafana)&nbsp;
+![Tempo](https://img.shields.io/badge/-Tempo-131821?style=for-the-badge&logo=grafana)&nbsp;
+![Alloy](https://img.shields.io/badge/-Alloy-131821?style=for-the-badge&logo=grafana)&nbsp;
+![Prometheus](https://img.shields.io/badge/-Prometheus-131821?style=for-the-badge&logo=prometheus)&nbsp;
+![k6](https://img.shields.io/badge/-k6-131821?style=for-the-badge&logo=k6)&nbsp;
+![Jest](https://img.shields.io/badge/-Jest-131821?style=for-the-badge&logo=jest)&nbsp;
 
-## Tech Stack
+</div>
 
-- Runtime: Node.js 22 (Docker image based on `node:22-alpine`)
-- Framework: NestJS 11
-- Language: TypeScript
-- Testing: Jest
-- ORM: Prisma (PostgreSQL target)
+<p align="center">
+  <img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" />
+</p>
 
-## Installation
+## Description
 
-1. Install Node.js 22 (or the latest Node 22.x LTS) and npm if you plan to run the API locally outside of containers.
-2. Clone the repository and install dependencies when working locally:
+A powerful, type-safe NestJS boilerplate designed for scalability and developer experience. It comes pre-configured with essential tools like Prisma ORM, JWT Authentication (including Refresh Tokens), RBAC, Swagger documentation, and a robust logging system.
 
-   ```bash
-   npm install
-   ```
+## Features
 
-3. Start the development server with hot reload:
+- **Authentication & Security**
+  - JWT Access Tokens & Refresh Tokens
+  - HttpOnly Cookie support for secure token storage
+  - RBAC (Role-Based Access Control)
+  - CORS Whitelisting
+  - Password hashing with Bcrypt
+- **Developer Experience**
+  - Fully Typed with TypeScript
+  - DTO Validation via `class-validator` & `class-transformer`
+  - OpenAPI (Swagger) Integration at `/docs`
+  - Global Validation Pipe
+  - Unified Error Handling
+- **Database & Ops**
+  - Prisma ORM for type-safe database access
+  - Redis integration for caching/logging
+  - Docker & Docker Compose support
+  - Custom Logger (Winston) with daily rotation
+- **Performance & Observability**
+  - Powered by Bun for fast execution
+  - Throttling & Rate Limiting
+  - Distributed Tracing with OpenTelemetry
+  - Metrics exposure via Prometheus exporter `/metrics` with default port `9464`
+  - Log correlation (Trace ID injection into Winston logs)
 
-   ```bash
-   npm run start:dev
-   ```
+## Repo Stats
 
-4. The API will be available at `http://localhost:3000` (default).
+![Alt](https://repobeats.axiom.co/api/embed/bacf3559fe13db7c67ff75df6188a697271bdd96.svg 'Repobeats analytics image')
 
-5. If you prefer to work inside Docker instead of installing Node locally, skip steps 1–3 and rely on `docker compose up --build` (see next section): both dependency installation and the production build happen inside the multi-stage Dockerfile so no manual `npm install` is required for the containerized service.
+## Star History
 
-## Environment
+<a href="https://www.star-history.com/#armandwipangestu/nestjs-boilerplate&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=armandwipangestu/nestjs-boilerplate&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=armandwipangestu/nestjs-boilerplate&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=armandwipangestu/nestjs-boilerplate&type=date&legend=top-left" />
+ </picture>
+</a>
 
-- Copy `.env.example` to `.env` (or set the same variables through your tooling) before running Prisma or the API. The example file already matches the Docker stack: `DATABASE_URL=postgresql://postgres:postgres@db:5432/rumahbaca?schema=public` and `NODE_ENV=development`, so Prisma migrations inside the container use the same credentials as Postgres.
-- If you override credentials in `docker-compose.yml`, keep the `DATABASE_URL` in sync so Prisma clients and CLI commands point at the correct host, port, and schema.
-- Prisma 7 now reads `prisma.schema` from `package.json` and the code-based `prisma.config.ts`, so migrations will automatically target `prisma/schema.prisma`. If you still see schema lookup errors when running `npx prisma migrate dev`, explicitly add `--schema=prisma/schema.prisma` or make sure `prisma.config.ts` is bundled into the container so Prisma can load it.
+## Contributors
 
-## Scripts
+<a href="https://github.com/armandwipangestu/nestjs-boilerplate/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=armandwipangestu/nestjs-boilerplate" />
+</a>
+
+## Running the Application
+
+### Using Bun
 
 ```bash
-# build the project
-npm run build
+# Clone the repository
+git clone https://github.com/armandwipangestu/nestjs-boilerplate.git
 
-# run in various environments
-npm run start
-npm run start:dev
-npm run start:prod
+# Install dependencies
+bun install
 
-# lint
-npm run lint
+# Setup environment variables
+cp .env.example .env
 
-# tests
-npm run test
-npm run test:cov
-npm run test:e2e
-npm run test:watch
-npm run test:debug
+# Generate Prisma client
+bun run prisma generate
+
+# Run migrations
+bun run prisma:migrate:deploy
+
+# Run seeder
+bun run prisma:seed
+
+# Run in development mode
+bun run start:dev
 ```
 
-## Running with Docker + PostgreSQL
+### Using Docker
 
-- The provided `Dockerfile` builds a production-ready image using Node 22, installs dependencies, compiles the Nest app, and packages just the compiled `dist/` output with production deps so the runtime image stays lean.
-- Run `docker compose up --build` to start the API (exposed on port 3000) plus PostgreSQL 18.3.
-- The `db` service uses the latest PostgreSQL 18.3 image (latest patch release as of February 26, 2026) with the credentials defined in `docker-compose.yml`. The `pgdata` volume now mounts at `/var/lib/postgresql` to match the PostgreSQL 18+ layout, which keeps your data between restarts and lets pg_upgrade work correctly.
-- Set `DATABASE_URL` to match the container credentials (e.g., `postgres://postgres:postgres@db:5432/rumahbaca`) before starting Prisma migrations.
-- After Docker starts, run Prisma maintenance commands if the schema changes:
+> [!NOTE]
+> If you want to run `loki`, `tempo`, and `prometheus`. You should change ownership folder using this command:
+>
+> ```bash
+> # loki
+> sudo chown -R 10001:10001 ./docker-data/loki
+>
+> # tempo
+> sudo chown -R 10001:10001 ./docker-data/tempo
+>
+> # prometheus
+> sudo chown -R 65534:65534 ./docker-data/prometheus
+> ```
+>
+> You can also import dashboard for metrics using `observability/grafana/dashboard-metrics.json` and logs using `observability/grafana/dashboard-logs.json`.
 
-  ```bash
-  docker compose run api npx prisma migrate dev
-  docker compose run api npx prisma generate
-  ```
+```bash
+docker-compose up -d
+```
 
-- The production container uses `npm run start:prod`, which now resolves to `node dist/src/main` so the compiled Nest entry point is found at its actual output path.
+### Load Testing with k6
 
-## Status
+You can perform load testing using the provided `k6` script located at `observability/k6/load-test.js`.
 
-The backend is still in bootstrap phase. Refer to `docs/PRD Kelompok 1.txt` when requirements change.
+#### Running Locally
+
+If you have `k6` installed on your machine:
+
+```bash
+# Basic run
+k6 run observability/k6/load-test.js
+
+# Run with custom environment variables
+BASE_URL=http://localhost:3000 k6 run observability/k6/load-test.js
+```
+
+## Roadmap
+
+- [x] JWT Authentication with Refresh Tokens
+- [x] RBAC implementation
+- [x] Swagger Documentation
+- [x] Prisma & PostgreSQL Integration
+- [x] Redis Integration
+- [x] Custom Logger (Winston)
+- [x] CORS Whitelisting
+- [x] Global Validation Pipe
+- [x] CI/CD Github Actions
+- [x] Semantic Versioning & Conventional Commits
+- [x] Export data metrics using Prometheus exporter (Port 9464)
+- [x] Distributed tracing integration using OpenTelemetry
+- [x] Observability setup using OpenTelemetry, Grafana, Loki, Tempo, and Prometheus
+- [x] Load testing using k6
+- [x] Unit & E2E Tests coverage
+- [] Multi database support (SQLite, PostgreSQL, MySQL, etc.)
+
+## License
+
+This project is [MIT licensed](https://github.com/armandwipangestu/nestjs-boilerplate/blob/main/LICENSE).
