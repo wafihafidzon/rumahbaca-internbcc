@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { defineConfig, env } from 'prisma/config';
+import { defineConfig } from 'prisma/config';
 
 export default defineConfig({
   schema: 'prisma/schema.prisma',
@@ -8,7 +8,12 @@ export default defineConfig({
     seed: 'bun prisma/seed.ts',
   },
   datasource: {
-    url: process.env.DATABASE_URL ?? 'postgresql://dummy:dummy@localhost:5432/dummy',
-    shadowDatabaseUrl: process.env.SHADOW_DATABASE_URL ?? process.env.DATABASE_URL?.replace(/\/([^/]+)$/, '/shadow_$1') ?? 'postgresql://dummy:dummy@localhost:5432/shadow_dummy',
+    url:
+      process.env.DATABASE_URL ??
+      'postgresql://dummy:dummy@localhost:5432/dummy',
+    shadowDatabaseUrl:
+      process.env.SHADOW_DATABASE_URL ??
+      process.env.DATABASE_URL?.replace(/\/([^/]+)$/, '/shadow_$1') ??
+      'postgresql://dummy:dummy@localhost:5432/shadow_dummy',
   },
 });
