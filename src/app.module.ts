@@ -31,6 +31,7 @@ import { ReadingStreakModule } from './reading-streak/reading-streak.module';
 import { ReadingDashboardModule } from './reading-dashboard/reading-dashboard.module';
 import { FriendRequestModule } from './friend-request/friend-request.module';
 import { FriendsModule } from './friends/friends.module';
+import { RoomsModule } from './rooms/rooms.module';
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { FriendsModule } from './friends/friends.module';
     ReadingDashboardModule,
     FriendRequestModule,
     FriendsModule,
+    RoomsModule,
     MetricsModule,
   ],
   controllers: [AppController],
