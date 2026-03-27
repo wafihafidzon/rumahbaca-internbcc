@@ -1,11 +1,6 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  AuthProvider,
-  Prisma,
-  RefreshToken,
-  User,
-} from '@prisma/client';
+import { AuthProvider, Prisma, RefreshToken, User } from '@prisma/client';
 import { UserWithRolesRelations } from '../common/types/user.types';
 import { randomBytes } from 'crypto';
 

@@ -113,15 +113,13 @@ describe('AuthRepository', () => {
   });
 
   it('throws conflict when email is linked to a different googleId', async () => {
-    tx.user.findUnique
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(
-        makeUser({
-          email: 'user@example.com',
-          provider: AuthProvider.GOOGLE,
-          googleId: 'other-google-id',
-        }),
-      );
+    tx.user.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce(
+      makeUser({
+        email: 'user@example.com',
+        provider: AuthProvider.GOOGLE,
+        googleId: 'other-google-id',
+      }),
+    );
 
     await expect(
       repository.upsertGoogleUser({
