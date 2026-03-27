@@ -16,6 +16,9 @@ describe('ReadingSessionService', () => {
   let readingTrackerRepository: {
     findByIdAndUser: jest.Mock;
   };
+  let readingStreakService: {
+    recordActivity: jest.Mock;
+  };
   let prisma: {
     $transaction: jest.Mock;
   };
@@ -31,6 +34,10 @@ describe('ReadingSessionService', () => {
       findByIdAndUser: jest.fn(),
     };
 
+    readingStreakService = {
+      recordActivity: jest.fn(),
+    };
+
     prisma = {
       $transaction: jest.fn(),
     };
@@ -38,6 +45,7 @@ describe('ReadingSessionService', () => {
     service = new ReadingSessionService(
       readingSessionRepository as unknown as Mocked<any>,
       readingTrackerRepository as unknown as Mocked<any>,
+      readingStreakService as unknown as Mocked<any>,
       prisma as unknown as Mocked<any>,
     );
   });
@@ -64,6 +72,7 @@ describe('ReadingSessionService', () => {
       BadRequestException,
     );
     expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(readingStreakService.recordActivity).not.toHaveBeenCalled();
   });
 
   it('throws when startPage is less than currentPage', async () => {
@@ -78,6 +87,7 @@ describe('ReadingSessionService', () => {
       'Cannot go backward',
     );
     expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(readingStreakService.recordActivity).not.toHaveBeenCalled();
   });
 
   it('throws when endPage is not greater than startPage', async () => {
@@ -92,6 +102,7 @@ describe('ReadingSessionService', () => {
       'Must read at least 1 page',
     );
     expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(readingStreakService.recordActivity).not.toHaveBeenCalled();
   });
 
   it('throws when endPage exceeds total pages', async () => {
@@ -106,6 +117,7 @@ describe('ReadingSessionService', () => {
       'Cannot exceed total pages',
     );
     expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(readingStreakService.recordActivity).not.toHaveBeenCalled();
   });
 
   it('auto-completes tracker when endPage equals totalPages', async () => {
@@ -142,6 +154,7 @@ describe('ReadingSessionService', () => {
         return session;
       },
     );
+    readingStreakService.recordActivity.mockResolvedValue(undefined);
 
     const dto: CreateReadingSessionDto = {
       startPage: 150,
@@ -160,6 +173,10 @@ describe('ReadingSessionService', () => {
           completedAt: expect.any(Date),
         }),
       }),
+    );
+    expect(readingStreakService.recordActivity).toHaveBeenCalledWith(
+      userId,
+      session.trackedAt,
     );
     expect(result.id).toBe('session-1');
   });

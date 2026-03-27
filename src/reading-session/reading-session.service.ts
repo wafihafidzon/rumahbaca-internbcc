@@ -7,6 +7,7 @@ import { ReadingTrackerStatus } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { PaginationMetaDto } from '../common/dto/pagination.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { ReadingStreakService } from '../reading-streak/reading-streak.service';
 import { ReadingTrackerRepository } from '../reading-tracker/reading-tracker.repository';
 import { CreateReadingSessionDto } from './dto/create-reading-session.dto';
 import { ReadingSessionQueryDto } from './dto/reading-session-query.dto';
@@ -21,6 +22,7 @@ export class ReadingSessionService {
   constructor(
     private readonly readingSessionRepository: ReadingSessionRepository,
     private readonly readingTrackerRepository: ReadingTrackerRepository,
+    private readonly readingStreakService: ReadingStreakService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -93,6 +95,8 @@ export class ReadingSessionService {
 
       return created;
     });
+
+    await this.readingStreakService.recordActivity(userId, session.trackedAt);
 
     return this.toReadingSessionResponseDto(session);
   }
