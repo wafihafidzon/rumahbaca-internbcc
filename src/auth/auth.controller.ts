@@ -98,12 +98,20 @@ export class AuthController {
     );
   }
 
+  @ApiOperation({ summary: 'Initiate Google OAuth2 login' })
+  @ApiResponse({ status: 302, description: 'Redirects to Google OAuth2' })
   @Get('google')
   @UseGuards(AuthGuard('google'))
   googleAuth(): void {
     return;
   }
 
+  @ApiOperation({ summary: 'Google OAuth2 callback' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully authenticated via Google',
+    type: AuthResponseDto,
+  })
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthCallback(

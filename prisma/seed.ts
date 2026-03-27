@@ -28,9 +28,21 @@ async function main() {
     console.log('🌱 Starting database seeding...');
 
     await prisma.refreshToken.deleteMany();
+    await prisma.readingSession.deleteMany();
+    await prisma.userReadingStreakDay.deleteMany();
+    await prisma.userReadingStreak.deleteMany();
+    await prisma.readingTracker.deleteMany();
+    await prisma.roomCommentLike.deleteMany();
+    await prisma.roomComment.deleteMany();
+    await prisma.roomMember.deleteMany();
+    await prisma.roomInvite.deleteMany();
+    await prisma.readingRoom.deleteMany();
+    await prisma.friendRequest.deleteMany();
+    await prisma.friendship.deleteMany();
     await prisma.userRole.deleteMany();
     await prisma.role.deleteMany();
     await prisma.user.deleteMany();
+    await prisma.book.deleteMany();
 
     const roleNames = ['ADMIN', 'MODERATOR', 'USER'] as const;
     const createdRoles: Role[] = [];

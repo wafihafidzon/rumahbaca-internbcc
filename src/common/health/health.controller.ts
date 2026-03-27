@@ -11,7 +11,9 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { RedisHealthIndicator } from './indicators/redis-health.indicator';
 import { SkipThrottle } from '@nestjs/throttler';
 import { CustomLoggerService } from '../logger/logger.service';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+@ApiTags('Health')
 @Controller('health')
 export class HealthController {
   constructor(
@@ -24,6 +26,9 @@ export class HealthController {
     private logger: CustomLoggerService,
   ) {}
 
+  @ApiOperation({ summary: 'Check service health (Redis, DB, memory, disk)' })
+  @ApiResponse({ status: 200, description: 'All checks passed' })
+  @ApiResponse({ status: 503, description: 'One or more checks failed' })
   @Get()
   @SkipThrottle()
   @HealthCheck()
