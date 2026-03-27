@@ -120,7 +120,10 @@ describe('RoomsService', () => {
     };
 
     it('should return only rooms where caller is a RoomMember', async () => {
-      mockRepo.findAllByMember.mockResolvedValue({ data: [baseRoom], total: 1 });
+      mockRepo.findAllByMember.mockResolvedValue({
+        data: [baseRoom],
+        total: 1,
+      });
 
       const result = await service.findAll(user, { page: 1, limit: 10 });
 
@@ -133,7 +136,10 @@ describe('RoomsService', () => {
     });
 
     it('should filter by status when provided', async () => {
-      mockRepo.findAllByMember.mockResolvedValue({ data: [baseRoom], total: 1 });
+      mockRepo.findAllByMember.mockResolvedValue({
+        data: [baseRoom],
+        total: 1,
+      });
 
       await service.findAll(user, {
         page: 1,
@@ -195,7 +201,10 @@ describe('RoomsService', () => {
       mockRepo.findMembership.mockResolvedValue(null);
 
       await expect(
-        service.updateProgress(user, 'room-1', { currentPage: 10, pagesRead: 10 }),
+        service.updateProgress(user, 'room-1', {
+          currentPage: 10,
+          pagesRead: 10,
+        }),
       ).rejects.toThrow(ForbiddenException);
     });
 

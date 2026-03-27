@@ -97,7 +97,10 @@ describe('RoomsService > inviteMember()', () => {
         { provide: RoomsRepository, useValue: mockRoomsRepo },
         { provide: CustomLoggerService, useValue: mockLogger },
         { provide: PrismaService, useValue: mockPrisma },
-        { provide: RoomInvitesService, useValue: mockRoomInvitesServiceForRooms },
+        {
+          provide: RoomInvitesService,
+          useValue: mockRoomInvitesServiceForRooms,
+        },
       ],
     }).compile();
 
@@ -212,7 +215,10 @@ describe('RoomInvitesService > respond()', () => {
     });
 
     it('should create RoomMember and upsert ReadingTracker in transaction', async () => {
-      const acceptedInvite = { ...pendingInvite, status: RoomInviteStatus.ACCEPTED };
+      const acceptedInvite = {
+        ...pendingInvite,
+        status: RoomInviteStatus.ACCEPTED,
+      };
       mockInvitesRepo.findById.mockResolvedValue(pendingInvite);
       mockInvitesRepo.acceptAndCreateMember.mockResolvedValue(acceptedInvite);
 
@@ -241,7 +247,10 @@ describe('RoomInvitesService > respond()', () => {
     });
 
     it('should update invite status to REJECTED and not create a RoomMember', async () => {
-      const rejectedInvite = { ...pendingInvite, status: RoomInviteStatus.REJECTED };
+      const rejectedInvite = {
+        ...pendingInvite,
+        status: RoomInviteStatus.REJECTED,
+      };
       mockInvitesRepo.findById.mockResolvedValue(pendingInvite);
       mockInvitesRepo.updateStatus.mockResolvedValue(rejectedInvite);
 
