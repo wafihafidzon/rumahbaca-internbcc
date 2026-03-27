@@ -2,105 +2,181 @@
 
 Backend service untuk aplikasi RumahBaca, dibangun dengan NestJS + Prisma + PostgreSQL.
 
-README ini mendeskripsikan kondisi project saat ini (bukan lagi template boilerplate umum).
-
 ## Ringkasan
 
-Project ini menyediakan fondasi API untuk fitur inti RumahBaca:
+Project ini menyediakan REST API untuk fitur inti RumahBaca:
 
-- autentikasi JWT (access + refresh token)
-- manajemen user dan avatar
-- manajemen post
+- Autentikasi JWT (access + refresh token) + Google OAuth
+- Manajemen user dan avatar
+- Manajemen buku (katalog)
+- Reading tracker, sesi baca, streak, dan dashboard
+- Pertemanan (friend request + friends)
+- Reading room (baca bareng) dengan invite, komentar, dan likes
 - RBAC (role + permission)
-- cache Redis, rate limiting, dan health check
-- observability (OpenTelemetry, Prometheus, Grafana, Loki, Tempo)
-
-Status saat ini: domain utama yang sudah berjalan di codebase adalah `auth`, `users`, dan `posts`. Kontrak endpoint produk yang lebih luas ada di [docs/api-schema.md](./docs/api-schema.md).
+- Cache Redis, rate limiting, dan health check
+- Observability (OpenTelemetry, Prometheus, Grafana, Loki, Tempo)
 
 ## Tech Stack
 
 - NestJS 11 (Express)
-- TypeScript
-- Prisma ORM
-- PostgreSQL
-- Redis
-- Bun (runtime/script runner)
-- Swagger (opsional via env)
-- OpenTelemetry + Prometheus + Grafana + Loki + Tempo
+- TypeScript ES2023
+- Prisma ORM 7 + PostgreSQL 18
+- Redis (ioredis + cache-manager + Keyv)
+- Bun (runtime & script runner)
+- Swagger (opsional via `ENABLE_SWAGGER=true`, tersedia di `/docs`)
+- OpenTelemetry → Prometheus + Grafana + Loki + Tempo
 - MinIO / S3-compatible object storage
 
 ## Fitur yang Sudah Ada
 
-- Register, login, refresh token, logout
+### Auth
+- Register, login, logout
 - Refresh token via HttpOnly cookie
-- Authorization dengan JWT Guard + ACL Guard
-- CRUD user (dengan permission-based access)
-- Upload avatar user (`multipart/form-data`)
-- CRUD post + pagination/filter/search
-- Global validation pipe + unified exception filter
-- Request logging (Winston + rotate file)
-- Redis cache + custom cache interceptor/decorator
-- Hybrid rate limiter storage (Redis + fallback)
-- Health check untuk PostgreSQL, Redis, memory, disk
-- Endpoint metrics OpenTelemetry/Prometheus
+- Google OAuth2 login
+- JWT Guard + ACL Guard (role + permission based)
 
-## Endpoint Utama yang Aktif
+### Users
+- CRUD user (permission-based)
+- Upload avatar (`multipart/form-data`)
+- Search user
 
-Saat ini controller yang aktif:
+### Books
+- Tambah buku
+- Cari buku
 
-- `GET /`
-- `GET /health`
-- `POST /auth/register`
-- `POST /auth/login`
-- `POST /auth/refresh`
-- `POST /auth/logout`
-- `GET /users`
-- `GET /users/:id`
-- `POST /users`
-- `PATCH /users/:id`
-- `DELETE /users/:id`
-- `POST /users/:id/avatar`
-- `GET /posts`
-- `GET /posts/:id`
-- `POST /posts`
-- `PATCH /posts/:id`
-- `DELETE /posts/:id`
+### Reading
+- Buat & kelola reading tracker per buku
+- Catat sesi baca (halaman, durasi)
+- Reading streak harian + kalender streak
+- Dashboard progres baca
 
-Catatan:
+### Friends
+- Kirim, terima, tolak, batalkan friend request
+- List teman, hapus pertemanan
 
-- Tidak ada global API prefix saat ini (bukan `/api/v1` di runtime saat ini).
-- Swagger aktif jika `ENABLE_SWAGGER=true`, tersedia di `/docs`.
+### Rooms (Reading Room)
+- Buat reading room (terhubung ke buku)
+- List & detail room (khusus anggota)
+- Invite teman ke room, terima/tolak invite
+- Catat progres baca dalam room
+- Komentar dalam room + likes komentar
+
+## Endpoint Aktif
+
+### General
+| Method | Path | Keterangan |
+|--------|------|------------|
+| GET | `/` | Root |
+| GET | `/health` | Health check |
+
+### Auth
+| Method | Path | Keterangan |
+|--------|------|------------|
+| POST | `/auth/register` | Daftar akun baru |
+| POST | `/auth/login` | Login |
+| POST | `/auth/refresh` | Refresh access token |
+| POST | `/auth/logout` | Logout |
+| GET | `/auth/google` | Redirect ke Google OAuth |
+| GET | `/auth/google/callback` | Callback Google OAuth |
+
+### Users
+| Method | Path | Keterangan |
+|--------|------|------------|
+| GET | `/users` | List semua user |
+| GET | `/users/search` | Cari user |
+| GET | `/users/:id` | Detail user |
+| POST | `/users` | Buat user |
+| PATCH | `/users/:id` | Update user |
+| DELETE | `/users/:id` | Hapus user |
+| POST | `/users/:id/avatar` | Upload avatar |
+
+### Books
+| Method | Path | Keterangan |
+|--------|------|------------|
+| POST | `/books` | Tambah buku |
+| GET | `/books/search` | Cari buku |
+
+### Reading
+| Method | Path | Keterangan |
+|--------|------|------------|
+| POST | `/readings` | Buat reading tracker |
+| GET | `/readings` | List reading tracker |
+| GET | `/readings/:id` | Detail reading tracker |
+| PATCH | `/readings/:id` | Update reading tracker |
+| POST | `/readings/:id/sessions` | Catat sesi baca |
+| GET | `/readings/:id/sessions` | List sesi baca |
+| GET | `/reading-streak/me` | Streak aktif user |
+| GET | `/reading-streak/me/calendar` | Kalender streak bulanan |
+| GET | `/reading-dashboard/me` | Dashboard progres baca |
+
+### Friends
+| Method | Path | Keterangan |
+|--------|------|------------|
+| POST | `/friend-requests` | Kirim friend request |
+| GET | `/friend-requests` | List friend request |
+| PATCH | `/friend-requests/:id/respond` | Terima / tolak / batalkan |
+| GET | `/friends` | List teman |
+| DELETE | `/friends/:friendId` | Hapus pertemanan |
+
+### Rooms
+| Method | Path | Keterangan |
+|--------|------|------------|
+| POST | `/rooms` | Buat reading room |
+| GET | `/rooms` | List room milik user |
+| GET | `/rooms/:id` | Detail room (khusus anggota) |
+| POST | `/rooms/:id/progress` | Catat progres baca dalam room |
+| POST | `/rooms/:id/invites` | Invite teman ke room |
+| GET | `/rooms/:id/comments` | List komentar room |
+| POST | `/rooms/:id/comments` | Tambah komentar |
+| POST | `/rooms/comments/:id/likes` | Like komentar |
+| DELETE | `/rooms/comments/:id/likes` | Unlike komentar |
+
+### Room Invites
+| Method | Path | Keterangan |
+|--------|------|------------|
+| GET | `/room-invites` | List invite pending user |
+| PATCH | `/room-invites/:id/respond` | Terima / tolak invite |
+
+> Swagger UI tersedia di `/docs` jika `ENABLE_SWAGGER=true`.
 
 ## Menjalankan Project (Local)
 
-### 1) Setup
+### 1. Setup
 
 ```bash
 bun install
 cp .env.example .env
 ```
 
-### 2) Generate Prisma Client + Migrasi + Seed
+### 2. Generate Prisma Client + Migrasi + Seed
 
 ```bash
 bun run prisma generate
-bun run prisma:migrate:deploy
+bun run prisma migrate deploy
 bun run prisma:seed
 ```
 
-### 3) Jalankan API
+### 3. Jalankan API
 
 ```bash
 bun run start:dev
 ```
 
-API default berjalan di `http://127.0.0.1:3000` (tergantung `HOST` dan `PORT` di env).
+API berjalan di `http://127.0.0.1:3000` (sesuai `HOST` dan `PORT` di env).
 
 ## Testing
 
 ```bash
+# Unit tests
 bun run test
+
+# Satu file
+bun run test -- auth.service.spec.ts
+
+# E2E tests (butuh PostgreSQL + Redis aktif)
 bun run test:e2e
+
+# Coverage
 bun run test:cov
 ```
 
@@ -112,43 +188,58 @@ Untuk menjalankan full stack (API + DB + Redis + observability):
 docker-compose up -d
 ```
 
-Service utama dari `docker-compose.yml`:
+| Port | Service |
+|------|---------|
+| 3001 | API |
+| 9464 | Prometheus metrics exporter |
+| 5434 | PostgreSQL |
+| 6380 | Redis |
+| 9000 | MinIO S3 API |
+| 9001 | MinIO Console |
+| 3002 | Grafana |
+| 9090 | Prometheus |
+| 3100 | Loki |
+| 3200 | Tempo |
 
-- API: `localhost:3001`
-- Metrics exporter: `localhost:9465`
-- PostgreSQL: `localhost:5434`
-- Redis: `localhost:6380`
-- MinIO API: `localhost:9000`
-- MinIO Console: `localhost:9001`
-- Grafana: `localhost:3002`
-- Prometheus: `localhost:9090`
-- Loki: `localhost:3100`
-- Tempo: `localhost:3200`
+## Struktur Direktori
 
-## Struktur Direktori Penting
+```
+src/
+├── auth/                  # JWT, refresh token, Google OAuth, ACL
+├── user/                  # User CRUD + avatar upload
+├── book/                  # Katalog buku
+├── reading-tracker/       # Tracker buku per user
+├── reading-session/       # Sesi baca
+├── reading-streak/        # Streak harian + kalender
+├── reading-dashboard/     # Dashboard progres
+├── friend-request/        # Kirim/terima/tolak friend request
+├── friends/               # List & hapus teman
+├── rooms/                 # Reading room + komentar + likes
+├── room-invites/          # Invite anggota ke room
+├── common/                # Cache, logger, Redis, health, observability
+├── config/                # Typed configuration service
+└── prisma/                # Prisma integration
 
-- `src/auth` - auth, JWT, refresh token, ACL
-- `src/user` - user service/controller/DTO + upload avatar
-- `src/post` - post service/controller/DTO
-- `src/common` - cache, logger, redis, health, observability, filters, middleware
-- `src/config` - typed configuration service
-- `src/prisma` - prisma integration service/module
-- `prisma/schema.prisma` - skema database
-- `prisma/seed.ts` - seeder data awal (roles, permissions, users, posts)
-- `docs/api-schema.md` - kontrak API produk RumahBaca
-- `docs/architecture.md` - catatan arsitektur backend
+prisma/
+├── schema.prisma          # Skema database
+└── seed.ts                # Seeder (roles, permissions, users)
+```
 
 ## Environment Variables (Kunci)
 
 Lihat `.env.example` untuk referensi lengkap. Variabel penting:
 
-- `DATABASE_URL`
-- `JWT_SECRET`, `JWT_EXPIRATION`
-- `JWT_REFRESH_SECRET`, `JWT_REFRESH_EXPIRATION`
-- `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`
-- `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`
-- `ENABLE_SWAGGER`, `CORS_ALLOWED_ORIGINS`, `COOKIE_SECURE`
-- `ENABLE_TRACING`, `ENABLE_METRICS`, `OTEL_EXPORTER_OTLP_ENDPOINT`
+| Variable | Keterangan |
+|----------|------------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `JWT_SECRET`, `JWT_EXPIRATION` | Access token config |
+| `JWT_REFRESH_SECRET`, `JWT_REFRESH_EXPIRATION` | Refresh token config |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google OAuth |
+| `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` | Redis config |
+| `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Storage config |
+| `ENABLE_SWAGGER` | Aktifkan Swagger UI di `/docs` |
+| `CORS_ALLOWED_ORIGINS`, `COOKIE_SECURE` | Security config |
+| `ENABLE_TRACING`, `ENABLE_METRICS`, `OTEL_EXPORTER_OTLP_ENDPOINT` | Observability config |
 
 ## Referensi Docs Internal
 
