@@ -90,4 +90,53 @@ export class UserRepository {
   async findById(id: string) {
     return this.prisma.user.findUnique({ where: { id } });
   }
+
+  async searchUsers(
+    currentUserId: string,
+    q: string,
+    skip: number,
+    limit: number,
+  ) {
+    const where = {
+      id: { not: currentUserId },
+      OR: [
+        { name: { contains: q, mode: 'insensitive' as const } },
+        { username: { contains: q, mode: 'insensitive' as const } },
+      ],
+    };
+
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        select: { id: true, username: true, name: true, avatarUrl: true },
+        orderBy: { name: 'asc' },
+      }),
+      this.prisma.user.count({ where }),
+    ]);
+
+    return { users, total };
+  }
+
+  async findFriendship(userAId: string, userBId: string) {
+    return this.prisma.friendship.findFirst({
+      where: {
+        OR: [
+          { userId1: userAId, userId2: userBId },
+          { userId1: userBId, userId2: userAId },
+        ],
+      },
+    });
+  }
+
+  async findPendingSentRequest(senderId: string, receiverId: string) {
+    return this.prisma.friendRequest.findFirst({
+      where: {
+        senderId,
+        receiverId,
+        status: 'PENDING',
+      },
+    });
+  }
 }

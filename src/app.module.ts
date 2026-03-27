@@ -29,6 +29,8 @@ import { ReadingTrackerModule } from './reading-tracker/reading-tracker.module';
 import { ReadingSessionModule } from './reading-session/reading-session.module';
 import { ReadingStreakModule } from './reading-streak/reading-streak.module';
 import { ReadingDashboardModule } from './reading-dashboard/reading-dashboard.module';
+import { FriendRequestModule } from './friend-request/friend-request.module';
+import { FriendsModule } from './friends/friends.module';
 
 @Module({
   imports: [
@@ -77,6 +79,8 @@ import { ReadingDashboardModule } from './reading-dashboard/reading-dashboard.mo
     ReadingSessionModule,
     ReadingStreakModule,
     ReadingDashboardModule,
+    FriendRequestModule,
+    FriendsModule,
     MetricsModule,
   ],
   controllers: [AppController],

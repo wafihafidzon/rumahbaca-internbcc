@@ -36,6 +36,9 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth-guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { ROLES } from '../auth/constants/acl.constant';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { JwtPayload } from '../auth/interfaces/auth.interface';
+import { UserSearchQueryDto } from './dto/user-search-query.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -51,6 +54,18 @@ export class UserController {
   @Get()
   async findAll(@Query() query: UserQueryDto): Promise<UserListResponseDto> {
     return this.userService.findAll(query);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(ROLES.USER, ROLES.ADMIN)
+  @Get('search')
+  @ApiOperation({ summary: 'Search users by name or username' })
+  async search(
+    @Query() query: UserSearchQueryDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.userService.search(user.sub, query);
   }
 
   @ApiOperation({ summary: 'Get user by ID' })
