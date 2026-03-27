@@ -134,4 +134,105 @@ export class RoomsRepository {
       },
     });
   }
+
+  async findCommentsByRoom(
+    roomId: string,
+    query: { skip: number; take: number },
+  ) {
+    const where = { roomId };
+
+    const [data, total] = await Promise.all([
+      this.prisma.roomComment.findMany({
+        where,
+        skip: query.skip,
+        take: query.take,
+        orderBy: { createdAt: 'asc' },
+        include: {
+          author: {
+            select: {
+              id: true,
+              username: true,
+              avatarUrl: true,
+            },
+          },
+          _count: {
+            select: {
+              likes: true,
+            },
+          },
+        },
+      }),
+      this.prisma.roomComment.count({ where }),
+    ]);
+
+    return { data, total };
+  }
+
+  async createComment(roomId: string, authorId: string, content: string) {
+    return this.prisma.roomComment.create({
+      data: {
+        roomId,
+        authorId,
+        content,
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            username: true,
+            avatarUrl: true,
+          },
+        },
+        _count: {
+          select: {
+            likes: true,
+          },
+        },
+      },
+    });
+  }
+
+  async findCommentById(commentId: string) {
+    return this.prisma.roomComment.findUnique({
+      where: { id: commentId },
+      select: {
+        id: true,
+        roomId: true,
+      },
+    });
+  }
+
+  async createCommentLike(commentId: string, userId: string) {
+    return this.prisma.roomCommentLike.create({
+      data: {
+        commentId,
+        userId,
+      },
+      select: {
+        commentId: true,
+        userId: true,
+        createdAt: true,
+      },
+    });
+  }
+
+  async findCommentLike(commentId: string, userId: string) {
+    return this.prisma.roomCommentLike.findUnique({
+      where: {
+        commentId_userId: {
+          commentId,
+          userId,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+  }
+
+  async deleteCommentLike(id: string) {
+    await this.prisma.roomCommentLike.delete({
+      where: { id },
+    });
+  }
 }
