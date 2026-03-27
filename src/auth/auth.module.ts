@@ -9,6 +9,9 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { AuthController } from './auth.controller';
 import { AppConfigService } from '../config/app-config.service';
 import { AppConfigModule } from '../config/app-config.module';
+import { JwtAuthGuard } from './guards/jwt-auth-guard';
+import { RolesGuard } from './guards/roles.guard';
+import { GoogleStrategy } from './strategies/google.strategy';
 
 @Module({
   imports: [
@@ -27,8 +30,15 @@ import { AppConfigModule } from '../config/app-config.module';
       }),
     }),
   ],
-  providers: [AuthService, AuthRepository, JwtStrategy],
+  providers: [
+    AuthService,
+    AuthRepository,
+    JwtStrategy,
+    GoogleStrategy,
+    JwtAuthGuard,
+    RolesGuard,
+  ],
   controllers: [AuthController],
-  exports: [AuthService, AuthRepository],
+  exports: [AuthService, AuthRepository, JwtAuthGuard, RolesGuard],
 })
 export class AuthModule {}

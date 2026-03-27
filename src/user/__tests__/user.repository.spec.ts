@@ -20,16 +20,14 @@ const mockPrismaService = {
 
 // ─── Shared fixture ───────────────────────────────────────────────────────────
 
-const ACL_RELATIONS = {
+const ROLE_RELATIONS = {
   roles: [
     {
       role: {
         name: 'USER',
-        permissions: [{ permission: { name: 'index-user' } }],
       },
     },
   ],
-  permissions: [],
 };
 
 const baseUser = {
@@ -37,29 +35,22 @@ const baseUser = {
   email: 'john@example.com',
   username: 'johndoe',
   password: '$2b$10$hashedpassword',
-  firstName: 'John',
-  lastName: 'Doe',
+  name: 'John Doe',
+  bio: null,
   isActive: true,
+  provider: 'LOCAL',
+  googleId: null,
   avatarUrl: null,
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),
-  ...ACL_RELATIONS,
+  ...ROLE_RELATIONS,
 };
 
 const expectedInclude = {
   roles: {
     include: {
-      role: {
-        include: {
-          permissions: {
-            include: { permission: true },
-          },
-        },
-      },
+      role: true,
     },
-  },
-  permissions: {
-    include: { permission: true },
   },
 };
 
@@ -223,10 +214,10 @@ describe('UserRepository', () => {
 
   describe('updateUser', () => {
     it('should call prisma.user.update with correct id, data, and ACL include', async () => {
-      const updatedUser = { ...baseUser, firstName: 'Jane' };
+      const updatedUser = { ...baseUser, name: 'Jane Doe' };
       mockPrismaUser.update.mockResolvedValue(updatedUser);
 
-      const data = { firstName: 'Jane' };
+      const data = { name: 'Jane Doe' };
       await repository.updateUser('user-id-1', data);
 
       expect(mockPrismaUser.update).toHaveBeenCalledWith({
@@ -237,11 +228,11 @@ describe('UserRepository', () => {
     });
 
     it('should return the updated user', async () => {
-      const updatedUser = { ...baseUser, firstName: 'Jane' };
+      const updatedUser = { ...baseUser, name: 'Jane Doe' };
       mockPrismaUser.update.mockResolvedValue(updatedUser);
 
       const result = await repository.updateUser('user-id-1', {
-        firstName: 'Jane',
+        name: 'Jane Doe',
       });
 
       expect(result).toEqual(updatedUser);

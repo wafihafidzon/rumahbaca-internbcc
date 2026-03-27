@@ -1,6 +1,14 @@
 import { registerAs } from '@nestjs/config';
 import { StringValue } from 'ms';
 
+function getRequiredEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} is required for Google OAuth configuration`);
+  }
+  return value;
+}
+
 export interface AppConfig {
   databaseUrl: string;
 
@@ -9,6 +17,12 @@ export interface AppConfig {
     expiration: StringValue;
     refreshSecret: string;
     refreshExpiration: StringValue;
+  };
+
+  google: {
+    googleClientId: string;
+    googleClientSecret: string;
+    googleCallbackUrl: string;
   };
 
   redis: {
@@ -71,6 +85,13 @@ export default registerAs('app', () => ({
     refreshSecret: process.env.JWT_REFRESH_SECRET,
     refreshExpiration: (process.env.JWT_REFRESH_EXPIRATION ??
       '7d') as StringValue,
+  },
+  google: {
+    googleClientId: getRequiredEnv('GOOGLE_CLIENT_ID'),
+    googleClientSecret: getRequiredEnv('GOOGLE_CLIENT_SECRET'),
+    googleCallbackUrl:
+      process.env.GOOGLE_CALLBACK_URL ??
+      'http://localhost:3001/auth/google/callback',
   },
   redis: {
     host: process.env.REDIS_HOST,

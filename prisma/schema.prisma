@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,92 +7,271 @@ datasource db {
 }
 
 model User {
-  id            String           @id @default(cuid())
-  email         String           @unique
-  username      String           @unique
-  password      String
-  firstName     String?          @map("first_name")
-  lastName      String?          @map("last_name")
-  isActive      Boolean          @default(true) @map("is_active")
-  avatarUrl     String?          @map("avatar_url")
-  createdAt     DateTime         @default(now()) @map("created_at")
-  updatedAt     DateTime         @updatedAt @map("updated_at")
-  posts         Post[]
-  refreshTokens RefreshToken[]
-  roles         UserRole[]
-  permissions   UserPermission[]
-
-  @@map("users")
+  id                     String                 @id @default(uuid()) @db.Uuid
+  username               String                 @unique
+  email                  String                 @unique
+  password               String?
+  name                   String
+  bio                    String?
+  googleId               String?                @unique
+  provider               AuthProvider           @default(LOCAL)
+  isActive               Boolean                @default(true)
+  avatarUrl              String?
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+  roles                  UserRole[]
+  refreshTokens          RefreshToken[]
+  sentFriendRequests     FriendRequest[]        @relation("SentRequests")
+  receivedFriendRequests FriendRequest[]        @relation("ReceivedRequests")
+  friendshipsAsUser1     Friendship[]           @relation("FriendshipUser1")
+  friendshipsAsUser2     Friendship[]           @relation("FriendshipUser2")
+  createdBooks           Book[]                 @relation("CreatedBooks")
+  readingTrackers        ReadingTracker[]
+  readingStreak          UserReadingStreak?
+  readingStreakDays      UserReadingStreakDay[]
+  hostedRooms            ReadingRoom[]          @relation("HostedRooms")
+  roomInvites            RoomInvite[]           @relation("Invitee")
+  roomMembers            RoomMember[]
+  roomComments           RoomComment[]          @relation("CommentAuthor")
+  roomCommentLikes       RoomCommentLike[]
 }
 
 model Role {
-  id          String           @id @default(cuid())
-  name        String           @unique
-  permissions RolePermission[]
-  users       UserRole[]
-
-  @@map("roles")
-}
-
-model Permission {
-  id    String           @id @default(cuid())
-  name  String           @unique
-  roles RolePermission[]
-  users UserPermission[]
-
-  @@map("permissions")
+  id        String     @id @default(uuid()) @db.Uuid
+  name      String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  users     UserRole[]
 }
 
 model UserRole {
-  userId String @map("user_id")
-  roleId String @map("role_id")
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  roleId    String   @db.Uuid
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
-  @@id([userId, roleId])
-  @@map("user_roles")
-}
-
-model RolePermission {
-  roleId       String     @map("role_id")
-  permissionId String     @map("permission_id")
-  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-
-  @@id([roleId, permissionId])
-  @@map("role_permissions")
-}
-
-model UserPermission {
-  userId       String     @map("user_id")
-  permissionId String     @map("permission_id")
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-
-  @@id([userId, permissionId])
-  @@map("user_permissions")
-}
-
-model Post {
-  id        String   @id @default(cuid())
-  title     String
-  content   String   @db.Text
-  published Boolean  @default(false)
-  authorId  String   @map("author_id")
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("posts")
+  @@unique([userId, roleId])
 }
 
 model RefreshToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String   @map("user_id")
+  id        String   @id @default(uuid()) @db.Uuid
+  token     String
+  userId    String   @db.Uuid
+  expiresAt DateTime
+  createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
+}
 
-  @@map("refresh_tokens")
+model FriendRequest {
+  id         String              @id @default(uuid()) @db.Uuid
+  senderId   String              @db.Uuid
+  receiverId String              @db.Uuid
+  status     FriendRequestStatus @default(PENDING)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  sender     User                @relation("SentRequests", fields: [senderId], references: [id])
+  receiver   User                @relation("ReceivedRequests", fields: [receiverId], references: [id])
+
+  @@unique([senderId, receiverId])
+}
+
+model Friendship {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId1   String   @db.Uuid
+  userId2   String   @db.Uuid
+  createdAt DateTime @default(now())
+  user1     User     @relation("FriendshipUser1", fields: [userId1], references: [id])
+  user2     User     @relation("FriendshipUser2", fields: [userId2], references: [id])
+
+  @@unique([userId1, userId2])
+}
+
+model Book {
+  id              String           @id @default(uuid()) @db.Uuid
+  title           String
+  author          String
+  totalPages      Int
+  coverUrl        String?
+  createdByUserId String           @db.Uuid
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  createdBy       User             @relation("CreatedBooks", fields: [createdByUserId], references: [id])
+  trackers        ReadingTracker[]
+  rooms           ReadingRoom[]
+}
+
+model ReadingTracker {
+  id            String               @id @default(uuid()) @db.Uuid
+  userId        String               @db.Uuid
+  bookId        String               @db.Uuid
+  currentPage   Int                  @default(0)
+  status        ReadingTrackerStatus @default(ACTIVE)
+  startedAt     DateTime             @default(now())
+  completedAt   DateTime?
+  targetEndDate DateTime?
+  dailyPageGoal Int?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  user          User                 @relation(fields: [userId], references: [id])
+  book          Book                 @relation(fields: [bookId], references: [id])
+  sessions      ReadingSession[]
+
+  @@unique([userId, bookId])
+}
+
+model ReadingSession {
+  id               String         @id @default(uuid()) @db.Uuid
+  readingTrackerId String         @db.Uuid
+  trackedAt        DateTime       @default(now())
+  startPage        Int
+  endPage          Int
+  durationMinutes  Int?
+  insight          String?
+  photoUrl         String?
+  roomId           String?        @db.Uuid
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  tracker          ReadingTracker @relation(fields: [readingTrackerId], references: [id])
+  room             ReadingRoom?   @relation(fields: [roomId], references: [id])
+}
+
+model UserReadingStreak {
+  id                       String                 @id @default(uuid()) @db.Uuid
+  userId                   String                 @unique @db.Uuid
+  currentCount             Int                    @default(0)
+  status                   StreakStatus           @default(INACTIVE)
+  availableFreezes         Int                    @default(2)
+  lastActiveDate           DateTime?
+  lastCountedDate          DateTime?
+  consecutivePreStreakDays Int                    @default(0)
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @updatedAt
+  user                     User                   @relation(fields: [userId], references: [id])
+  days                     UserReadingStreakDay[]
+}
+
+model UserReadingStreakDay {
+  id                 String            @id @default(uuid()) @db.Uuid
+  userId             String            @db.Uuid
+  date               DateTime          @db.Date
+  status             StreakDayStatus
+  pagesRead          Int               @default(0)
+  sourceSessionCount Int               @default(0)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  user               User              @relation(fields: [userId], references: [id], map: "user_reading_streak_days_user_fkey")
+  streak             UserReadingStreak @relation(fields: [userId], references: [userId], map: "user_reading_streak_days_streak_fkey")
+
+  @@unique([userId, date])
+}
+
+model ReadingRoom {
+  id          String           @id @default(uuid()) @db.Uuid
+  hostId      String           @db.Uuid
+  bookId      String           @db.Uuid
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  status      RoomStatus       @default(ACTIVE)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  host        User             @relation("HostedRooms", fields: [hostId], references: [id])
+  book        Book             @relation(fields: [bookId], references: [id])
+  invites     RoomInvite[]
+  members     RoomMember[]
+  comments    RoomComment[]
+  sessions    ReadingSession[]
+}
+
+model RoomInvite {
+  id        String           @id @default(uuid()) @db.Uuid
+  roomId    String           @db.Uuid
+  inviteeId String           @db.Uuid
+  status    RoomInviteStatus @default(PENDING)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  room      ReadingRoom      @relation(fields: [roomId], references: [id])
+  invitee   User             @relation("Invitee", fields: [inviteeId], references: [id])
+
+  @@unique([roomId, inviteeId])
+}
+
+model RoomMember {
+  id       String      @id @default(uuid()) @db.Uuid
+  roomId   String      @db.Uuid
+  userId   String      @db.Uuid
+  joinedAt DateTime    @default(now())
+  room     ReadingRoom @relation(fields: [roomId], references: [id])
+  user     User        @relation(fields: [userId], references: [id])
+
+  @@unique([roomId, userId])
+}
+
+model RoomComment {
+  id        String            @id @default(uuid()) @db.Uuid
+  roomId    String            @db.Uuid
+  authorId  String            @db.Uuid
+  content   String
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  room      ReadingRoom       @relation(fields: [roomId], references: [id])
+  author    User              @relation("CommentAuthor", fields: [authorId], references: [id])
+  likes     RoomCommentLike[]
+}
+
+model RoomCommentLike {
+  id        String      @id @default(uuid()) @db.Uuid
+  commentId String      @db.Uuid
+  userId    String      @db.Uuid
+  createdAt DateTime    @default(now())
+  comment   RoomComment @relation(fields: [commentId], references: [id])
+  user      User        @relation(fields: [userId], references: [id])
+
+  @@unique([commentId, userId])
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+enum ReadingTrackerStatus {
+  ACTIVE
+  COMPLETED
+  PAUSED
+}
+
+enum StreakStatus {
+  INACTIVE
+  ACTIVE
+  FROZEN
+}
+
+enum StreakDayStatus {
+  READ
+  FREEZE
+  MISS
+  RESET
+}
+
+enum RoomStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum RoomInviteStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
 }

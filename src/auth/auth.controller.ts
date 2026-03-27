@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   Post,
   Req,
@@ -19,11 +20,13 @@ import { CurrentUser } from './decorators/current-user.decorator';
 import type {
   JwtPayload,
   RequestWithCookies,
+  RequestWithGoogleUser,
 } from './interfaces/auth.interface';
 import { LoginDto } from './dto/login.dto';
 import { plainToInstance } from 'class-transformer';
 import { AuthResponseDto, AuthUserResponseDto } from './dto/auth-response.dto';
 import { RegisterDto } from './dto/register.dto';
+import { AuthGuard } from '@nestjs/passport';
 import {
   ApiTags,
   ApiOperation,
@@ -78,6 +81,37 @@ export class AuthController {
     const result = await this.authService.login(user);
 
     // Set refresh token in httpOnly cookie
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: this.appConfig.env.cookieSecure,
+      sameSite: 'strict',
+      maxAge: ms(this.appConfig.jwt.refreshExpiration),
+    });
+
+    return plainToInstance(
+      AuthResponseDto,
+      {
+        accessToken: result.accessToken,
+        user: result.user,
+      },
+      { excludeExtraneousValues: true },
+    );
+  }
+
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  googleAuth(): void {
+    return;
+  }
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthCallback(
+    @Req() req: RequestWithGoogleUser,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AuthResponseDto> {
+    const result = await this.authService.googleLogin(req.user);
+
     res.cookie('refreshToken', result.refreshToken, {
       httpOnly: true,
       secure: this.appConfig.env.cookieSecure,

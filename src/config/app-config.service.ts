@@ -10,6 +10,10 @@ export class AppConfigService {
     return this.config.getOrThrow<AppConfig['jwt']>('app.jwt');
   }
 
+  get google() {
+    return this.config.getOrThrow<AppConfig['google']>('app.google');
+  }
+
   get env() {
     return this.config.getOrThrow<AppConfig['env']>('app.env');
   }

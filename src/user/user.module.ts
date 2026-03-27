@@ -6,9 +6,10 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { LoggerModule } from '../common/logger/logger.module';
 import { CacheModule } from '../common/cache/cache.module';
 import { StorageModule } from '../common/storage/storage.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [PrismaModule, LoggerModule, CacheModule, StorageModule],
+  imports: [PrismaModule, LoggerModule, CacheModule, StorageModule, AuthModule],
   controllers: [UserController],
   providers: [UserService, UserRepository],
   exports: [UserService, UserRepository],
