@@ -44,6 +44,12 @@ export class RolesGuard implements CanActivate {
     );
 
     if (!hasRequiredRole) {
+      this.logger.warn(
+        `Access denied for ${user.email}; required roles: [${requiredRoles.join(
+          ', ',
+        )}], current roles: [${user.roles?.join(', ') ?? ''}]`,
+        'RolesGuard',
+      );
       throw new ForbiddenException(
         `You do not have required role [${requiredRoles.join(', ')}]`,
       );

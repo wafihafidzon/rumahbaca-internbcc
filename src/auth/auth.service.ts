@@ -81,8 +81,10 @@ export class AuthService {
       roles: user.roles,
     };
 
-    const accessToken = this.jwtService.sign(payload);
-
+    const accessToken = this.jwtService.sign(payload, {
+      secret: this.appConfig.jwt.secret,
+      expiresIn: this.appConfig.jwt.expiration,
+    });
     const refreshToken = this.jwtService.sign(payload, {
       secret: this.appConfig.jwt.refreshSecret,
       expiresIn: this.appConfig.jwt.refreshExpiration,
@@ -151,7 +153,10 @@ export class AuthService {
         roles: user.roles,
       };
 
-      const newAccessToken = this.jwtService.sign(newPayload);
+      const newAccessToken = this.jwtService.sign(newPayload, {
+        secret: this.appConfig.jwt.secret,
+        expiresIn: this.appConfig.jwt.expiration,
+      });
 
       this.logger.debug(
         `Token refreshed successfully for: ${user.email}`,

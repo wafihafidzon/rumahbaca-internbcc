@@ -1,6 +1,14 @@
 import { registerAs } from '@nestjs/config';
 import { StringValue } from 'ms';
 
+function getRequiredEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} is required for Google OAuth configuration`);
+  }
+  return value;
+}
+
 export interface AppConfig {
   databaseUrl: string;
 
@@ -79,8 +87,8 @@ export default registerAs('app', () => ({
       '7d') as StringValue,
   },
   google: {
-    googleClientId: process.env.GOOGLE_CLIENT_ID ?? '',
-    googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+    googleClientId: getRequiredEnv('GOOGLE_CLIENT_ID'),
+    googleClientSecret: getRequiredEnv('GOOGLE_CLIENT_SECRET'),
     googleCallbackUrl:
       process.env.GOOGLE_CALLBACK_URL ??
       'http://localhost:3001/auth/google/callback',

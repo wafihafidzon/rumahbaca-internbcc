@@ -121,6 +121,26 @@ describe('AuthService', () => {
     expect(result.accessToken).toBe('access-token');
     expect(result.refreshToken).toBe('refresh-token');
     expect(result.user.roles).toEqual(['USER']);
+    expect(mockJwtService.sign).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        sub: 'user-id-1',
+      }),
+      {
+        secret: mockAppConfig.jwt.secret,
+        expiresIn: mockAppConfig.jwt.expiration,
+      },
+    );
+    expect(mockJwtService.sign).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        sub: 'user-id-1',
+      }),
+      {
+        secret: mockAppConfig.jwt.refreshSecret,
+        expiresIn: mockAppConfig.jwt.refreshExpiration,
+      },
+    );
     expect(mockAuthRepository.createRefreshToken).toHaveBeenCalled();
   });
 
@@ -179,6 +199,40 @@ describe('AuthService', () => {
       expect.objectContaining({
         googleId: 'google-123',
       }),
+    );
+  });
+
+  it('refreshAccessToken signs new access token with explicit secret and expiresIn', async () => {
+    mockJwtService.verify.mockReturnValue({
+      sub: 'user-id-1',
+      email: 'test@example.com',
+      username: 'testuser',
+      roles: ['USER'],
+    });
+    mockAuthRepository.findRefreshTokensByUserId.mockResolvedValue([
+      {
+        id: 'token-id',
+        token: 'hashed-refresh-token',
+        userId: 'user-id-1',
+        expiresAt: new Date(Date.now() + 60_000),
+        createdAt: new Date(),
+      },
+    ]);
+    (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+    mockAuthRepository.findUserByIdWithRoles.mockResolvedValue(mockUserWithRoles);
+    mockJwtService.sign.mockReturnValue('new-access-token');
+
+    const result = await service.refreshAccessToken('refresh-token');
+
+    expect(result).toEqual({ accessToken: 'new-access-token' });
+    expect(mockJwtService.sign).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sub: 'user-id-1',
+      }),
+      {
+        secret: mockAppConfig.jwt.secret,
+        expiresIn: mockAppConfig.jwt.expiration,
+      },
     );
   });
 });
