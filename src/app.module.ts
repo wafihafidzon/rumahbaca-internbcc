@@ -28,6 +28,7 @@ import { BookModule } from './book/book.module';
 import { ReadingTrackerModule } from './reading-tracker/reading-tracker.module';
 import { ReadingSessionModule } from './reading-session/reading-session.module';
 import { ReadingStreakModule } from './reading-streak/reading-streak.module';
+import { ReadingDashboardModule } from './reading-dashboard/reading-dashboard.module';
 
 @Module({
   imports: [
@@ -75,6 +76,7 @@ import { ReadingStreakModule } from './reading-streak/reading-streak.module';
     ReadingTrackerModule,
     ReadingSessionModule,
     ReadingStreakModule,
+    ReadingDashboardModule,
     MetricsModule,
   ],
   controllers: [AppController],

@@ -39,8 +39,8 @@ export class ReadingTrackerRepository {
   async findManyByUser(
     userId: string,
     where: Prisma.ReadingTrackerWhereInput,
-    skip: number,
-    take: number,
+    skip = 0,
+    take = 100,
   ): Promise<ReadingTrackerWithBook[]> {
     return this.prisma.readingTracker.findMany({
       where: {
