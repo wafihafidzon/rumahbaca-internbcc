@@ -1,0 +1,268 @@
+Enum AuthProvider {
+  LOCAL
+  GOOGLE
+}
+
+Enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+Enum ReadingTrackerStatus {
+  ACTIVE
+  COMPLETED
+  PAUSED
+}
+
+Enum StreakStatus {
+  INACTIVE
+  ACTIVE
+  FROZEN
+}
+
+Enum StreakDayStatus {
+  READ
+  FREEZE
+  MISS
+  RESET
+}
+
+Enum RoomStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+Enum RoomInviteStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+Table User {
+  id uuid [pk]
+  username varchar [not null, unique]
+  email varchar [not null, unique]
+  passwordHash varchar // nullable - Google users have no password
+  name varchar [not null]
+  bio text
+  avatarUrl text
+  googleId varchar [unique] // nullable - only set for Google OAuth users
+  provider AuthProvider [not null, default: 'LOCAL']
+  isActive boolean [not null, default: true]
+  createdAt timestamp [not null]
+  updatedAt timestamp [not null]
+}
+
+Table Role {
+  id uuid [pk]
+  name varchar [not null, unique] // e.g. ADMIN, MODERATOR, USER
+}
+
+Table UserRole {
+  userId uuid [not null]
+  roleId uuid [not null]
+
+  indexes {
+    (userId, roleId) [pk]
+  }
+}
+
+Table RefreshToken {
+  id uuid [pk]
+  token varchar [not null, unique] // hashed token stored here
+  userId uuid [not null]
+  expiresAt timestamp [not null]
+  createdAt timestamp [not null]
+}
+
+Table FriendRequest {
+  id uuid [pk]
+  senderId uuid [not null]
+  receiverId uuid [not null]
+  status FriendRequestStatus [not null, default: 'PENDING']
+  createdAt timestamp [not null]
+  updatedAt timestamp [not null]
+
+  indexes {
+    (senderId, receiverId) [unique]
+  }
+}
+
+Table Friendship {
+  id uuid [pk]
+  userId1 uuid [not null]
+  userId2 uuid [not null]
+  createdAt timestamp [not null]
+
+  indexes {
+    (userId1, userId2) [unique]
+  }
+}
+
+Table Book {
+  id uuid [pk]
+  title varchar [not null]
+  author varchar [not null]
+  totalPages int [not null]
+  coverUrl text
+  createdByUserId uuid [not null]
+  createdAt timestamp [not null]
+  updatedAt timestamp [not null]
+}
+
+Table ReadingTracker {
+  id uuid [pk]
+  userId uuid [not null]
+  bookId uuid [not null]
+  currentPage int [not null, default: 0]
+  status ReadingTrackerStatus [not null, default: 'ACTIVE']
+  startedAt timestamp [not null]
+  completedAt timestamp
+  targetEndDate timestamp
+  dailyPageGoal int
+  createdAt timestamp [not null]
+  updatedAt timestamp [not null]
+
+  indexes {
+    (userId, bookId) [unique]
+  }
+}
+
+Table ReadingSession {
+  id uuid [pk]
+  readingTrackerId uuid [not null]
+  trackedAt timestamp [not null]
+  startPage int [not null]
+  endPage int [not null]
+  durationMinutes int
+  insight text
+  photoUrl text
+  roomId uuid
+  createdAt timestamp [not null]
+  updatedAt timestamp [not null]
+}
+
+Table UserReadingStreak {
+  id uuid [pk]
+  userId uuid [not null, unique]
+  currentCount int [not null, default: 0]
+  status StreakStatus [not null, default: 'INACTIVE']
+  availableFreezes int [not null, default: 2]
+  lastActiveDate timestamp
+  lastCountedDate timestamp
+  consecutivePreStreakDays int [not null, default: 0]
+  createdAt timestamp [not null]
+  updatedAt timestamp [not null]
+}
+
+Table UserReadingStreakDay {
+  id uuid [pk]
+  userId uuid [not null]
+  date date [not null]
+  status StreakDayStatus [not null]
+  pagesRead int [not null, default: 0]
+  sourceSessionCount int [not null, default: 0]
+  createdAt timestamp [not null]
+  updatedAt timestamp [not null]
+
+  indexes {
+    (userId, date) [unique]
+  }
+}
+
+Table ReadingRoom {
+  id uuid [pk]
+  hostId uuid [not null]
+  bookId uuid [not null]
+  title varchar [not null]
+  description text
+  startDate timestamp [not null]
+  endDate timestamp [not null]
+  status RoomStatus [not null, default: 'ACTIVE']
+  createdAt timestamp [not null]
+  updatedAt timestamp [not null]
+}
+
+Table RoomInvite {
+  id uuid [pk]
+  roomId uuid [not null]
+  inviteeId uuid [not null]
+  status RoomInviteStatus [not null, default: 'PENDING']
+  createdAt timestamp [not null]
+  updatedAt timestamp [not null]
+
+  indexes {
+    (roomId, inviteeId) [unique]
+  }
+}
+
+Table RoomMember {
+  id uuid [pk]
+  roomId uuid [not null]
+  userId uuid [not null]
+  joinedAt timestamp [not null]
+
+  indexes {
+    (roomId, userId) [unique]
+  }
+}
+
+Table RoomComment {
+  id uuid [pk]
+  roomId uuid [not null]
+  authorId uuid [not null]
+  content text [not null]
+  createdAt timestamp [not null]
+  updatedAt timestamp [not null]
+}
+
+Table RoomCommentLike {
+  id uuid [pk]
+  commentId uuid [not null]
+  userId uuid [not null]
+  createdAt timestamp [not null]
+
+  indexes {
+    (commentId, userId) [unique]
+  }
+}
+
+Ref: UserRole.userId > User.id
+Ref: UserRole.roleId > Role.id
+Ref: RefreshToken.userId > User.id
+
+Ref: FriendRequest.senderId > User.id
+Ref: FriendRequest.receiverId > User.id
+
+Ref: Friendship.userId1 > User.id
+Ref: Friendship.userId2 > User.id
+
+Ref: Book.createdByUserId > User.id
+
+Ref: ReadingTracker.userId > User.id
+Ref: ReadingTracker.bookId > Book.id
+
+Ref: ReadingSession.readingTrackerId > ReadingTracker.id
+Ref: ReadingSession.roomId > ReadingRoom.id
+
+Ref: UserReadingStreak.userId > User.id
+Ref: UserReadingStreakDay.userId > User.id
+Ref: UserReadingStreakDay.userId > UserReadingStreak.userId
+
+Ref: ReadingRoom.hostId > User.id
+Ref: ReadingRoom.bookId > Book.id
+
+Ref: RoomInvite.roomId > ReadingRoom.id
+Ref: RoomInvite.inviteeId > User.id
+
+Ref: RoomMember.roomId > ReadingRoom.id
+Ref: RoomMember.userId > User.id
+
+Ref: RoomComment.roomId > ReadingRoom.id
+Ref: RoomComment.authorId > User.id
+
+Ref: RoomCommentLike.commentId > RoomComment.id
+Ref: RoomCommentLike.userId > User.id

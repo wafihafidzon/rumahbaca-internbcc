@@ -1,79 +1,248 @@
-# RumahBaca Backend
+# RumahBaca Backend (API)
 
-## Overview
+Backend service untuk aplikasi RumahBaca, dibangun dengan NestJS + Prisma + PostgreSQL.
 
-RumahBaca is a social reading platform backend built with NestJS, offering features such as tracking reading progress, setting reading goals, creating reading rooms, and discussing books with friends within a room.
+## Ringkasan
+
+Project ini menyediakan REST API untuk fitur inti RumahBaca:
+
+- Autentikasi JWT (access + refresh token) + Google OAuth
+- Manajemen user dan avatar
+- Manajemen buku (katalog)
+- Reading tracker, sesi baca, streak, dan dashboard
+- Pertemanan (friend request + friends)
+- Reading room (baca bareng) dengan invite, komentar, dan likes
+- RBAC (role + permission)
+- Cache Redis, rate limiting, dan health check
+- Observability (OpenTelemetry, Prometheus, Grafana, Loki, Tempo)
 
 ## Tech Stack
 
-- Runtime: Node.js 22 (Docker image based on `node:22-alpine`)
-- Framework: NestJS 11
-- Language: TypeScript
-- Testing: Jest
-- ORM: Prisma (PostgreSQL target)
+- NestJS 11 (Express)
+- TypeScript ES2023
+- Prisma ORM 7 + PostgreSQL 18
+- Redis (ioredis + cache-manager + Keyv)
+- Bun (runtime & script runner)
+- Swagger (opsional via `ENABLE_SWAGGER=true`, tersedia di `/docs`)
+- OpenTelemetry → Prometheus + Grafana + Loki + Tempo
+- MinIO / S3-compatible object storage
 
-## Installation
+## Fitur yang Sudah Ada
 
-1. Install Node.js 22 (or the latest Node 22.x LTS) and npm if you plan to run the API locally outside of containers.
-2. Clone the repository and install dependencies when working locally:
+### Auth
+- Register, login, logout
+- Refresh token via HttpOnly cookie
+- Google OAuth2 login
+- JWT Guard + ACL Guard (role + permission based)
 
-   ```bash
-   npm install
-   ```
+### Users
+- CRUD user (permission-based)
+- Upload avatar (`multipart/form-data`)
+- Search user
 
-3. Start the development server with hot reload:
+### Books
+- Tambah buku
+- Cari buku
 
-   ```bash
-   npm run start:dev
-   ```
+### Reading
+- Buat & kelola reading tracker per buku
+- Catat sesi baca (halaman, durasi)
+- Reading streak harian + kalender streak
+- Dashboard progres baca
 
-4. The API will be available at `http://localhost:3000` (default).
+### Friends
+- Kirim, terima, tolak, batalkan friend request
+- List teman, hapus pertemanan
 
-5. If you prefer to work inside Docker instead of installing Node locally, skip steps 1–3 and rely on `docker compose up --build` (see next section): both dependency installation and the production build happen inside the multi-stage Dockerfile so no manual `npm install` is required for the containerized service.
+### Rooms (Reading Room)
+- Buat reading room (terhubung ke buku)
+- List & detail room (khusus anggota)
+- Invite teman ke room, terima/tolak invite
+- Catat progres baca dalam room
+- Komentar dalam room + likes komentar
 
-## Environment
+## Endpoint Aktif
 
-- Copy `.env.example` to `.env` (or set the same variables through your tooling) before running Prisma or the API. The example file already matches the Docker stack: `DATABASE_URL=postgresql://postgres:postgres@db:5432/rumahbaca?schema=public` and `NODE_ENV=development`, so Prisma migrations inside the container use the same credentials as Postgres.
-- If you override credentials in `docker-compose.yml`, keep the `DATABASE_URL` in sync so Prisma clients and CLI commands point at the correct host, port, and schema.
-- Prisma 7 now reads `prisma.schema` from `package.json` and the code-based `prisma.config.ts`, so migrations will automatically target `prisma/schema.prisma`. If you still see schema lookup errors when running `npx prisma migrate dev`, explicitly add `--schema=prisma/schema.prisma` or make sure `prisma.config.ts` is bundled into the container so Prisma can load it.
+### General
+| Method | Path | Keterangan |
+|--------|------|------------|
+| GET | `/` | Root |
+| GET | `/health` | Health check |
 
-## Scripts
+### Auth
+| Method | Path | Keterangan |
+|--------|------|------------|
+| POST | `/auth/register` | Daftar akun baru |
+| POST | `/auth/login` | Login |
+| POST | `/auth/refresh` | Refresh access token |
+| POST | `/auth/logout` | Logout |
+| GET | `/auth/google` | Redirect ke Google OAuth |
+| GET | `/auth/google/callback` | Callback Google OAuth |
+
+### Users
+| Method | Path | Keterangan |
+|--------|------|------------|
+| GET | `/users` | List semua user |
+| GET | `/users/search` | Cari user |
+| GET | `/users/:id` | Detail user |
+| POST | `/users` | Buat user |
+| PATCH | `/users/:id` | Update user |
+| DELETE | `/users/:id` | Hapus user |
+| POST | `/users/:id/avatar` | Upload avatar |
+
+### Books
+| Method | Path | Keterangan |
+|--------|------|------------|
+| POST | `/books` | Tambah buku |
+| GET | `/books/search` | Cari buku |
+
+### Reading
+| Method | Path | Keterangan |
+|--------|------|------------|
+| POST | `/readings` | Buat reading tracker |
+| GET | `/readings` | List reading tracker |
+| GET | `/readings/:id` | Detail reading tracker |
+| PATCH | `/readings/:id` | Update reading tracker |
+| POST | `/readings/:id/sessions` | Catat sesi baca |
+| GET | `/readings/:id/sessions` | List sesi baca |
+| GET | `/reading-streak/me` | Streak aktif user |
+| GET | `/reading-streak/me/calendar` | Kalender streak bulanan |
+| GET | `/reading-dashboard/me` | Dashboard progres baca |
+
+### Friends
+| Method | Path | Keterangan |
+|--------|------|------------|
+| POST | `/friend-requests` | Kirim friend request |
+| GET | `/friend-requests` | List friend request |
+| PATCH | `/friend-requests/:id/respond` | Terima / tolak / batalkan |
+| GET | `/friends` | List teman |
+| DELETE | `/friends/:friendId` | Hapus pertemanan |
+
+### Rooms
+| Method | Path | Keterangan |
+|--------|------|------------|
+| POST | `/rooms` | Buat reading room |
+| GET | `/rooms` | List room milik user |
+| GET | `/rooms/:id` | Detail room (khusus anggota) |
+| POST | `/rooms/:id/progress` | Catat progres baca dalam room |
+| POST | `/rooms/:id/invites` | Invite teman ke room |
+| GET | `/rooms/:id/comments` | List komentar room |
+| POST | `/rooms/:id/comments` | Tambah komentar |
+| POST | `/rooms/comments/:id/likes` | Like komentar |
+| DELETE | `/rooms/comments/:id/likes` | Unlike komentar |
+
+### Room Invites
+| Method | Path | Keterangan |
+|--------|------|------------|
+| GET | `/room-invites` | List invite pending user |
+| PATCH | `/room-invites/:id/respond` | Terima / tolak invite |
+
+> Swagger UI tersedia di `/docs` jika `ENABLE_SWAGGER=true`.
+
+## Menjalankan Project (Local)
+
+### 1. Setup
 
 ```bash
-# build the project
-npm run build
-
-# run in various environments
-npm run start
-npm run start:dev
-npm run start:prod
-
-# lint
-npm run lint
-
-# tests
-npm run test
-npm run test:cov
-npm run test:e2e
-npm run test:watch
-npm run test:debug
+bun install
+cp .env.example .env
 ```
 
-## Running with Docker + PostgreSQL
+### 2. Generate Prisma Client + Migrasi + Seed
 
-- The provided `Dockerfile` builds a production-ready image using Node 22, installs dependencies, compiles the Nest app, and packages just the compiled `dist/` output with production deps so the runtime image stays lean.
-- Run `docker compose up --build` to start the API (exposed on port 3000) plus PostgreSQL 18.3.
-- The `db` service uses the latest PostgreSQL 18.3 image (latest patch release as of February 26, 2026) with the credentials defined in `docker-compose.yml`. The `pgdata` volume now mounts at `/var/lib/postgresql` to match the PostgreSQL 18+ layout, which keeps your data between restarts and lets pg_upgrade work correctly.
-- Set `DATABASE_URL` to match the container credentials (e.g., `postgres://postgres:postgres@db:5432/rumahbaca`) before starting Prisma migrations.
-- After Docker starts, run Prisma maintenance commands if the schema changes:
+```bash
+bun run prisma generate
+bun run prisma migrate deploy
+bun run prisma:seed
+```
 
-  ```bash
-  docker compose run api npx prisma migrate dev
-  docker compose run api npx prisma generate
-  ```
+### 3. Jalankan API
 
-- The production container uses `npm run start:prod`, which now resolves to `node dist/src/main` so the compiled Nest entry point is found at its actual output path.
+```bash
+bun run start:dev
+```
 
-## Status
+API berjalan di `http://127.0.0.1:3000` (sesuai `HOST` dan `PORT` di env).
 
-The backend is still in bootstrap phase. Refer to `docs/PRD Kelompok 1.txt` when requirements change.
+## Testing
+
+```bash
+# Unit tests
+bun run test
+
+# Satu file
+bun run test -- auth.service.spec.ts
+
+# E2E tests (butuh PostgreSQL + Redis aktif)
+bun run test:e2e
+
+# Coverage
+bun run test:cov
+```
+
+## Docker Compose
+
+Untuk menjalankan full stack (API + DB + Redis + observability):
+
+```bash
+docker-compose up -d
+```
+
+| Port | Service |
+|------|---------|
+| 3001 | API |
+| 9464 | Prometheus metrics exporter |
+| 5434 | PostgreSQL |
+| 6380 | Redis |
+| 9000 | MinIO S3 API |
+| 9001 | MinIO Console |
+| 3002 | Grafana |
+| 9090 | Prometheus |
+| 3100 | Loki |
+| 3200 | Tempo |
+
+## Struktur Direktori
+
+```
+src/
+├── auth/                  # JWT, refresh token, Google OAuth, ACL
+├── user/                  # User CRUD + avatar upload
+├── book/                  # Katalog buku
+├── reading-tracker/       # Tracker buku per user
+├── reading-session/       # Sesi baca
+├── reading-streak/        # Streak harian + kalender
+├── reading-dashboard/     # Dashboard progres
+├── friend-request/        # Kirim/terima/tolak friend request
+├── friends/               # List & hapus teman
+├── rooms/                 # Reading room + komentar + likes
+├── room-invites/          # Invite anggota ke room
+├── common/                # Cache, logger, Redis, health, observability
+├── config/                # Typed configuration service
+└── prisma/                # Prisma integration
+
+prisma/
+├── schema.prisma          # Skema database
+└── seed.ts                # Seeder (roles, permissions, users)
+```
+
+## Environment Variables (Kunci)
+
+Lihat `.env.example` untuk referensi lengkap. Variabel penting:
+
+| Variable | Keterangan |
+|----------|------------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `JWT_SECRET`, `JWT_EXPIRATION` | Access token config |
+| `JWT_REFRESH_SECRET`, `JWT_REFRESH_EXPIRATION` | Refresh token config |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google OAuth |
+| `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` | Redis config |
+| `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` | Storage config |
+| `ENABLE_SWAGGER` | Aktifkan Swagger UI di `/docs` |
+| `CORS_ALLOWED_ORIGINS`, `COOKIE_SECURE` | Security config |
+| `ENABLE_TRACING`, `ENABLE_METRICS`, `OTEL_EXPORTER_OTLP_ENDPOINT` | Observability config |
+
+## Referensi Docs Internal
+
+- [Arsitektur](./docs/architecture.md)
+- [Kontrak API RumahBaca](./docs/api-schema.md)
+- [Rencana MVP Backend](./docs/mvp-backend-feature-plan.md)

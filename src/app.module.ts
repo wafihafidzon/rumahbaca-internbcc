@@ -1,10 +1,111 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
+import { LoggingMiddleware } from './common/middleware/logging.middleware';
 import { AppService } from './app.service';
+import { PrismaModule } from './prisma/prisma.module';
+import { ConfigModule } from '@nestjs/config';
+import appConfig from './config/app.config';
+import { AuthModule } from './auth/auth.module';
+import { AppConfigModule } from './config/app-config.module';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { AppConfigService } from './config/app-config.service';
+import { CacheModule } from './common/cache/cache.module';
+import { LoggerModule } from './common/logger/logger.module';
+import { CustomLoggerService } from './common/logger/logger.service';
+import { RedisModule, REDIS_CLIENT } from './common/redis/redis.module';
+import { HybridThrottlerStorage } from './common/throttler/hybrid-throttler-storage';
+import Redis from 'ioredis';
+import { HealthModule } from './common/health/health.module';
+import { StorageModule } from './common/storage/storage.module';
+import { UserModule } from './user/user.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import { MetricsModule } from './common/observability/metrics.module';
+import { HttpActiveRequestsInterceptor } from './common/observability/http-active-requests.interceptor';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { APP_GUARD, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
+import { BookModule } from './book/book.module';
+import { ReadingTrackerModule } from './reading-tracker/reading-tracker.module';
+import { ReadingSessionModule } from './reading-session/reading-session.module';
+import { ReadingStreakModule } from './reading-streak/reading-streak.module';
+import { ReadingDashboardModule } from './reading-dashboard/reading-dashboard.module';
+import { FriendRequestModule } from './friend-request/friend-request.module';
+import { FriendsModule } from './friends/friends.module';
+import { RoomInvitesModule } from './room-invites/room-invites.module';
+import { RoomsModule } from './rooms/rooms.module';
 
 @Module({
-  imports: [],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [appConfig],
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', '..', 'uploads'),
+      serveRoot: '/uploads',
+    }),
+    ThrottlerModule.forRootAsync({
+      imports: [AppConfigModule, LoggerModule, RedisModule],
+      inject: [AppConfigService, CustomLoggerService, REDIS_CLIENT],
+      useFactory: (
+        config: AppConfigService,
+        logger: CustomLoggerService,
+        redisClient: Redis,
+      ) => {
+        logger.log(
+          `Initializing Throttler with Hybrid storage (TTL: ${config.throttler.ttl}s, Limit: ${config.throttler.limit})`,
+          'ThrottlerInitialization',
+        );
+        return {
+          throttlers: [
+            {
+              ttl: config.throttler.ttl * 1000,
+              limit: config.throttler.limit,
+            },
+          ],
+          storage: new HybridThrottlerStorage(redisClient, logger),
+        };
+      },
+    }),
+    LoggerModule,
+    PrismaModule,
+    AuthModule,
+    AppConfigModule,
+    RedisModule,
+    CacheModule,
+    HealthModule,
+    StorageModule,
+    UserModule,
+    BookModule,
+    ReadingTrackerModule,
+    ReadingSessionModule,
+    ReadingStreakModule,
+    ReadingDashboardModule,
+    FriendRequestModule,
+    FriendsModule,
+    RoomInvitesModule,
+    RoomsModule,
+    MetricsModule,
+  ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: HttpActiveRequestsInterceptor,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
+  ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(LoggingMiddleware).forRoutes('*');
+  }
+}
