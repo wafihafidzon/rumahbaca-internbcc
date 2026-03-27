@@ -28,6 +28,13 @@ export class BookRepository {
     });
   }
 
+  async findById(id: string): Promise<Book | null> {
+    return this.prisma.book.findUnique({
+      where: { id },
+      include: bookInclude,
+    });
+  }
+
   async search(q: string, skip: number, take: number): Promise<Book[]> {
     return this.prisma.book.findMany({
       where: {

@@ -25,6 +25,7 @@ import { HttpActiveRequestsInterceptor } from './common/observability/http-activ
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { APP_GUARD, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { BookModule } from './book/book.module';
+import { ReadingTrackerModule } from './reading-tracker/reading-tracker.module';
 
 @Module({
   imports: [
@@ -69,6 +70,7 @@ import { BookModule } from './book/book.module';
     StorageModule,
     UserModule,
     BookModule,
+    ReadingTrackerModule,
     MetricsModule,
   ],
   controllers: [AppController],
