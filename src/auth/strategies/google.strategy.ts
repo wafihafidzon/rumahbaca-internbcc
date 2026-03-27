@@ -73,7 +73,7 @@ class CookieStateStore {
       return;
     }
 
-    const expectedState = req.cookies?.[this.cookieName];
+    const expectedState = req.cookies?.[this.cookieName] as string | undefined;
     req.res?.clearCookie(this.cookieName, {
       httpOnly: true,
       sameSite: 'lax',

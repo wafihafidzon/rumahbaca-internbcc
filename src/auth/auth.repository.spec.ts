@@ -40,7 +40,7 @@ describe('AuthRepository', () => {
       findMany: jest.fn(),
       deleteMany: jest.fn(),
     },
-    $transaction: jest.fn(async (callback: (client: typeof tx) => unknown) =>
+    $transaction: jest.fn((callback: (client: typeof tx) => unknown) =>
       callback(tx),
     ),
   };
@@ -53,7 +53,7 @@ describe('AuthRepository', () => {
     tx.user.update.mockReset();
     tx.user.create.mockReset();
     prisma.$transaction.mockImplementation(
-      async (callback: (client: typeof tx) => unknown) => callback(tx),
+      (callback: (client: typeof tx) => unknown) => callback(tx),
     );
   });
 
