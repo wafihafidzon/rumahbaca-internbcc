@@ -1,164 +1,157 @@
-<h1 align="center">A Production-Ready NestJS Boilerplate</h1>
+# RumahBaca Backend (API)
 
-<div align="center">
+Backend service untuk aplikasi RumahBaca, dibangun dengan NestJS + Prisma + PostgreSQL.
 
-![NestJS](https://img.shields.io/badge/-NestJS-131821?style=for-the-badge&logo=nestjs)&nbsp;
-![Prisma](https://img.shields.io/badge/-Prisma-131821?style=for-the-badge&logo=prisma)&nbsp;
-![Bun](https://img.shields.io/badge/-Bun-131821?style=for-the-badge&logo=bun)&nbsp;
-![PostgreSQL](https://img.shields.io/badge/-PostgreSQL-131821?style=for-the-badge&logo=postgresql)&nbsp;
-![Docker](https://img.shields.io/badge/-Docker-131821?style=for-the-badge&logo=docker)&nbsp;
-![Redis](https://img.shields.io/badge/-Redis-131821?style=for-the-badge&logo=redis)&nbsp;
-![Swagger](https://img.shields.io/badge/-Swagger-131821?style=for-the-badge&logo=swagger)&nbsp;
-![S3](https://img.shields.io/badge/-S3-131821?style=for-the-badge&logo=minio)&nbsp;
-![OpenTelemetry](https://img.shields.io/badge/-OpenTelemetry-131821?style=for-the-badge&logo=opentelemetry)&nbsp;
-![Grafana](https://img.shields.io/badge/-Grafana-131821?style=for-the-badge&logo=grafana)&nbsp;
-![Loki](https://img.shields.io/badge/-Loki-131821?style=for-the-badge&logo=grafana)&nbsp;
-![Tempo](https://img.shields.io/badge/-Tempo-131821?style=for-the-badge&logo=grafana)&nbsp;
-![Alloy](https://img.shields.io/badge/-Alloy-131821?style=for-the-badge&logo=grafana)&nbsp;
-![Prometheus](https://img.shields.io/badge/-Prometheus-131821?style=for-the-badge&logo=prometheus)&nbsp;
-![k6](https://img.shields.io/badge/-k6-131821?style=for-the-badge&logo=k6)&nbsp;
-![Jest](https://img.shields.io/badge/-Jest-131821?style=for-the-badge&logo=jest)&nbsp;
+README ini mendeskripsikan kondisi project saat ini (bukan lagi template boilerplate umum).
 
-</div>
+## Ringkasan
 
-<p align="center">
-  <img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" />
-</p>
+Project ini menyediakan fondasi API untuk fitur inti RumahBaca:
 
-## Description
+- autentikasi JWT (access + refresh token)
+- manajemen user dan avatar
+- manajemen post
+- RBAC (role + permission)
+- cache Redis, rate limiting, dan health check
+- observability (OpenTelemetry, Prometheus, Grafana, Loki, Tempo)
 
-A powerful, type-safe NestJS boilerplate designed for scalability and developer experience. It comes pre-configured with essential tools like Prisma ORM, JWT Authentication (including Refresh Tokens), RBAC, Swagger documentation, and a robust logging system.
+Status saat ini: domain utama yang sudah berjalan di codebase adalah `auth`, `users`, dan `posts`. Kontrak endpoint produk yang lebih luas ada di [docs/api-schema.md](./docs/api-schema.md).
 
-## Features
+## Tech Stack
 
-- **Authentication & Security**
-  - JWT Access Tokens & Refresh Tokens
-  - HttpOnly Cookie support for secure token storage
-  - RBAC (Role-Based Access Control)
-  - CORS Whitelisting
-  - Password hashing with Bcrypt
-- **Developer Experience**
-  - Fully Typed with TypeScript
-  - DTO Validation via `class-validator` & `class-transformer`
-  - OpenAPI (Swagger) Integration at `/docs`
-  - Global Validation Pipe
-  - Unified Error Handling
-- **Database & Ops**
-  - Prisma ORM for type-safe database access
-  - Redis integration for caching/logging
-  - Docker & Docker Compose support
-  - Custom Logger (Winston) with daily rotation
-- **Performance & Observability**
-  - Powered by Bun for fast execution
-  - Throttling & Rate Limiting
-  - Distributed Tracing with OpenTelemetry
-  - Metrics exposure via Prometheus exporter `/metrics` with default port `9464`
-  - Log correlation (Trace ID injection into Winston logs)
+- NestJS 11 (Express)
+- TypeScript
+- Prisma ORM
+- PostgreSQL
+- Redis
+- Bun (runtime/script runner)
+- Swagger (opsional via env)
+- OpenTelemetry + Prometheus + Grafana + Loki + Tempo
+- MinIO / S3-compatible object storage
 
-## Repo Stats
+## Fitur yang Sudah Ada
 
-![Alt](https://repobeats.axiom.co/api/embed/bacf3559fe13db7c67ff75df6188a697271bdd96.svg 'Repobeats analytics image')
+- Register, login, refresh token, logout
+- Refresh token via HttpOnly cookie
+- Authorization dengan JWT Guard + ACL Guard
+- CRUD user (dengan permission-based access)
+- Upload avatar user (`multipart/form-data`)
+- CRUD post + pagination/filter/search
+- Global validation pipe + unified exception filter
+- Request logging (Winston + rotate file)
+- Redis cache + custom cache interceptor/decorator
+- Hybrid rate limiter storage (Redis + fallback)
+- Health check untuk PostgreSQL, Redis, memory, disk
+- Endpoint metrics OpenTelemetry/Prometheus
 
-## Star History
+## Endpoint Utama yang Aktif
 
-<a href="https://www.star-history.com/#armandwipangestu/nestjs-boilerplate&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=armandwipangestu/nestjs-boilerplate&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=armandwipangestu/nestjs-boilerplate&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=armandwipangestu/nestjs-boilerplate&type=date&legend=top-left" />
- </picture>
-</a>
+Saat ini controller yang aktif:
 
-## Contributors
+- `GET /`
+- `GET /health`
+- `POST /auth/register`
+- `POST /auth/login`
+- `POST /auth/refresh`
+- `POST /auth/logout`
+- `GET /users`
+- `GET /users/:id`
+- `POST /users`
+- `PATCH /users/:id`
+- `DELETE /users/:id`
+- `POST /users/:id/avatar`
+- `GET /posts`
+- `GET /posts/:id`
+- `POST /posts`
+- `PATCH /posts/:id`
+- `DELETE /posts/:id`
 
-<a href="https://github.com/armandwipangestu/nestjs-boilerplate/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=armandwipangestu/nestjs-boilerplate" />
-</a>
+Catatan:
 
-## Running the Application
+- Tidak ada global API prefix saat ini (bukan `/api/v1` di runtime saat ini).
+- Swagger aktif jika `ENABLE_SWAGGER=true`, tersedia di `/docs`.
 
-### Using Bun
+## Menjalankan Project (Local)
+
+### 1) Setup
 
 ```bash
-# Clone the repository
-git clone https://github.com/armandwipangestu/nestjs-boilerplate.git
-
-# Install dependencies
 bun install
-
-# Setup environment variables
 cp .env.example .env
+```
 
-# Generate Prisma client
+### 2) Generate Prisma Client + Migrasi + Seed
+
+```bash
 bun run prisma generate
-
-# Run migrations
 bun run prisma:migrate:deploy
-
-# Run seeder
 bun run prisma:seed
+```
 
-# Run in development mode
+### 3) Jalankan API
+
+```bash
 bun run start:dev
 ```
 
-### Using Docker
+API default berjalan di `http://127.0.0.1:3000` (tergantung `HOST` dan `PORT` di env).
 
-> [!NOTE]
-> If you want to run `loki`, `tempo`, and `prometheus`. You should change ownership folder using this command:
->
-> ```bash
-> # loki
-> sudo chown -R 10001:10001 ./docker-data/loki
->
-> # tempo
-> sudo chown -R 10001:10001 ./docker-data/tempo
->
-> # prometheus
-> sudo chown -R 65534:65534 ./docker-data/prometheus
-> ```
->
-> You can also import dashboard for metrics using `observability/grafana/dashboard-metrics.json` and logs using `observability/grafana/dashboard-logs.json`.
+## Testing
+
+```bash
+bun run test
+bun run test:e2e
+bun run test:cov
+```
+
+## Docker Compose
+
+Untuk menjalankan full stack (API + DB + Redis + observability):
 
 ```bash
 docker-compose up -d
 ```
 
-### Load Testing with k6
+Service utama dari `docker-compose.yml`:
 
-You can perform load testing using the provided `k6` script located at `observability/k6/load-test.js`.
+- API: `localhost:3001`
+- Metrics exporter: `localhost:9465`
+- PostgreSQL: `localhost:5434`
+- Redis: `localhost:6380`
+- MinIO API: `localhost:9000`
+- MinIO Console: `localhost:9001`
+- Grafana: `localhost:3002`
+- Prometheus: `localhost:9090`
+- Loki: `localhost:3100`
+- Tempo: `localhost:3200`
 
-#### Running Locally
+## Struktur Direktori Penting
 
-If you have `k6` installed on your machine:
+- `src/auth` - auth, JWT, refresh token, ACL
+- `src/user` - user service/controller/DTO + upload avatar
+- `src/post` - post service/controller/DTO
+- `src/common` - cache, logger, redis, health, observability, filters, middleware
+- `src/config` - typed configuration service
+- `src/prisma` - prisma integration service/module
+- `prisma/schema.prisma` - skema database
+- `prisma/seed.ts` - seeder data awal (roles, permissions, users, posts)
+- `docs/api-schema.md` - kontrak API produk RumahBaca
+- `docs/architecture.md` - catatan arsitektur backend
 
-```bash
-# Basic run
-k6 run observability/k6/load-test.js
+## Environment Variables (Kunci)
 
-# Run with custom environment variables
-BASE_URL=http://localhost:3000 k6 run observability/k6/load-test.js
-```
+Lihat `.env.example` untuk referensi lengkap. Variabel penting:
 
-## Roadmap
+- `DATABASE_URL`
+- `JWT_SECRET`, `JWT_EXPIRATION`
+- `JWT_REFRESH_SECRET`, `JWT_REFRESH_EXPIRATION`
+- `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`
+- `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`
+- `ENABLE_SWAGGER`, `CORS_ALLOWED_ORIGINS`, `COOKIE_SECURE`
+- `ENABLE_TRACING`, `ENABLE_METRICS`, `OTEL_EXPORTER_OTLP_ENDPOINT`
 
-- [x] JWT Authentication with Refresh Tokens
-- [x] RBAC implementation
-- [x] Swagger Documentation
-- [x] Prisma & PostgreSQL Integration
-- [x] Redis Integration
-- [x] Custom Logger (Winston)
-- [x] CORS Whitelisting
-- [x] Global Validation Pipe
-- [x] CI/CD Github Actions
-- [x] Semantic Versioning & Conventional Commits
-- [x] Export data metrics using Prometheus exporter (Port 9464)
-- [x] Distributed tracing integration using OpenTelemetry
-- [x] Observability setup using OpenTelemetry, Grafana, Loki, Tempo, and Prometheus
-- [x] Load testing using k6
-- [x] Unit & E2E Tests coverage
-- [] Multi database support (SQLite, PostgreSQL, MySQL, etc.)
+## Referensi Docs Internal
 
-## License
-
-This project is [MIT licensed](https://github.com/armandwipangestu/nestjs-boilerplate/blob/main/LICENSE).
+- [Arsitektur](./docs/architecture.md)
+- [Kontrak API RumahBaca](./docs/api-schema.md)
+- [Rencana MVP Backend](./docs/mvp-backend-feature-plan.md)

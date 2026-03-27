@@ -9,5 +9,6 @@ export default defineConfig({
   },
   datasource: {
     url: process.env.DATABASE_URL ?? 'postgresql://dummy:dummy@localhost:5432/dummy',
+    shadowDatabaseUrl: process.env.SHADOW_DATABASE_URL ?? process.env.DATABASE_URL?.replace(/\/([^/]+)$/, '/shadow_$1') ?? 'postgresql://dummy:dummy@localhost:5432/shadow_dummy',
   },
 });
