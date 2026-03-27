@@ -112,8 +112,10 @@ Available at `/docs` when ENABLE_SWAGGER=true in env.
 - NEVER store secrets in code — use AppConfigService which reads from .env
 
 ### TypeScript
-- NEVER use `any` type — use proper types or `unknown` with type guards
+- NEVER use `any` or `unknown` — always use proper concrete types, interfaces, or generics
+- Exception: `catch (error: unknown)` is allowed since TypeScript requires it — but narrow immediately with `instanceof` or a type guard
 - MUST use typed properties in all classes (no implicit any)
+- MUST fix existing `any`/`unknown` usages encountered during refactors
 
 ### Observability
 - MUST inject Logger (LoggerModule) — never use console.log
