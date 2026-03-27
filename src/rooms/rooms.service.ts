@@ -12,7 +12,10 @@ import type { JwtPayload } from '../auth/interfaces/auth.interface';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { CommentDto, CommentListResponseDto } from './dto/comment-response.dto';
-import { RoomProgressDto } from './dto/room-progress.dto';
+import {
+  RoomProgressDto,
+  RoomProgressResponseDto,
+} from './dto/room-progress.dto';
 import { RoomQueryDto } from './dto/room-query.dto';
 import { RoomDetailDto, RoomListResponseDto } from './dto/room-response.dto';
 import { CommentLikeResponseDto } from './dto/comment-like-response.dto';
@@ -148,13 +151,7 @@ export class RoomsService {
     user: JwtPayload,
     roomId: string,
     dto: RoomProgressDto,
-  ): Promise<{
-    id: string;
-    pagesRead: number;
-    duration: number | null;
-    roomId: string | null;
-    createdAt: Date;
-  }> {
+  ): Promise<RoomProgressResponseDto> {
     const membership = await this.repo.findMembership(roomId, user.sub);
 
     if (!membership) {

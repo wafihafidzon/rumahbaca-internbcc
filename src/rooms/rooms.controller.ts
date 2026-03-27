@@ -29,7 +29,10 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { CommentDto, CommentListResponseDto } from './dto/comment-response.dto';
 import { CommentLikeResponseDto } from './dto/comment-like-response.dto';
-import { RoomProgressDto } from './dto/room-progress.dto';
+import {
+  RoomProgressDto,
+  RoomProgressResponseDto,
+} from './dto/room-progress.dto';
 import { RoomQueryDto } from './dto/room-query.dto';
 import {
   RoomDetailDto,
@@ -89,19 +92,19 @@ export class RoomsController {
   @ApiResponse({
     status: 201,
     description: 'Reading session created and tracker progress updated',
+    type: RoomProgressResponseDto,
   })
+  @ApiResponse({ status: 400, description: 'Invalid progress values' })
   @ApiResponse({ status: 403, description: 'Not a room member' })
+  @ApiResponse({
+    status: 404,
+    description: 'Room or reading tracker not found',
+  })
   async updateProgress(
     @CurrentUser() user: JwtPayload,
     @Param('id') id: string,
     @Body() dto: RoomProgressDto,
-  ): Promise<{
-    id: string;
-    pagesRead: number;
-    duration: number | null;
-    roomId: string | null;
-    createdAt: Date;
-  }> {
+  ): Promise<RoomProgressResponseDto> {
     return this.service.updateProgress(user, id, dto);
   }
 

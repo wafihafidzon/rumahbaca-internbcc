@@ -2,6 +2,23 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, Min } from 'class-validator';
 
+export class RoomProgressResponseDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  pagesRead: number;
+
+  @ApiProperty({ nullable: true })
+  duration: number | null;
+
+  @ApiProperty({ nullable: true })
+  roomId: string | null;
+
+  @ApiProperty()
+  createdAt: Date;
+}
+
 export class RoomProgressDto {
   @ApiProperty({ minimum: 0 })
   @Type(() => Number)
