@@ -7,11 +7,10 @@ export class FriendRequestRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(senderId: string, receiverId: string) {
-    return this.prisma.friendRequest.create({
-      data: {
-        senderId,
-        receiverId,
-      },
+    return this.prisma.friendRequest.upsert({
+      where: { senderId_receiverId: { senderId, receiverId } },
+      create: { senderId, receiverId },
+      update: { status: 'PENDING' as FriendRequestStatus },
       include: {
         sender: {
           select: {

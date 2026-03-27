@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { PaginationMetaDto } from '../../common/dto/pagination.dto';
 
 export class FriendRequestUserSummaryDto {
   @ApiProperty()
@@ -35,4 +36,12 @@ export class FriendRequestResponseDto {
 
   @ApiProperty({ type: FriendRequestUserSummaryDto, required: false })
   receiver?: FriendRequestUserSummaryDto;
+}
+
+export class FriendRequestListResponseDto {
+  @ApiProperty({ type: [FriendRequestResponseDto] })
+  data: FriendRequestResponseDto[];
+
+  @ApiProperty({ type: PaginationMetaDto })
+  pagination: PaginationMetaDto;
 }

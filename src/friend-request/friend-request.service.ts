@@ -97,6 +97,10 @@ export class FriendRequestService {
       throw new NotFoundException('Friend request not found');
     }
 
+    if (request.status !== 'PENDING') {
+      throw new ConflictException('This request is no longer pending');
+    }
+
     const { action } = dto;
 
     if (action === 'accept') {

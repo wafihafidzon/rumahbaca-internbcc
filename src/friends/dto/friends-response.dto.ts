@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { PaginationMetaDto } from '../../common/dto/pagination.dto';
 
 export class FriendResponseDto {
   @ApiProperty()
@@ -15,4 +16,12 @@ export class FriendResponseDto {
 
   @ApiProperty()
   friendsSince: Date;
+}
+
+export class FriendListResponseDto {
+  @ApiProperty({ type: [FriendResponseDto] })
+  data: FriendResponseDto[];
+
+  @ApiProperty({ type: PaginationMetaDto })
+  meta: PaginationMetaDto;
 }
