@@ -26,6 +26,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { APP_GUARD, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { BookModule } from './book/book.module';
 import { ReadingTrackerModule } from './reading-tracker/reading-tracker.module';
+import { ReadingSessionModule } from './reading-session/reading-session.module';
 
 @Module({
   imports: [
@@ -71,6 +72,7 @@ import { ReadingTrackerModule } from './reading-tracker/reading-tracker.module';
     UserModule,
     BookModule,
     ReadingTrackerModule,
+    ReadingSessionModule,
     MetricsModule,
   ],
   controllers: [AppController],
