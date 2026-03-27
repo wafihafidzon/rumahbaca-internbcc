@@ -24,6 +24,7 @@ import { MetricsModule } from './common/observability/metrics.module';
 import { HttpActiveRequestsInterceptor } from './common/observability/http-active-requests.interceptor';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { APP_GUARD, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
+import { BookModule } from './book/book.module';
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { APP_GUARD, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
     HealthModule,
     StorageModule,
     UserModule,
+    BookModule,
     MetricsModule,
   ],
   controllers: [AppController],
