@@ -219,7 +219,9 @@ describe('AuthService', () => {
       },
     ]);
     (bcrypt.compare as jest.Mock).mockResolvedValue(true);
-    mockAuthRepository.findUserByIdWithRoles.mockResolvedValue(mockUserWithRoles);
+    mockAuthRepository.findUserByIdWithRoles.mockResolvedValue(
+      mockUserWithRoles,
+    );
     mockJwtService.sign.mockReturnValue('new-access-token');
 
     const result = await service.refreshAccessToken('refresh-token');
