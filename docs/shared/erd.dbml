@@ -1,3 +1,8 @@
+Enum AuthProvider {
+  LOCAL
+  GOOGLE
+}
+
 Enum FriendRequestStatus {
   PENDING
   ACCEPTED
@@ -40,12 +45,37 @@ Table User {
   id uuid [pk]
   username varchar [not null, unique]
   email varchar [not null, unique]
-  passwordHash varchar [not null]
+  passwordHash varchar // nullable - Google users have no password
   name varchar [not null]
   bio text
   avatarUrl text
+  googleId varchar [unique] // nullable - only set for Google OAuth users
+  provider AuthProvider [not null, default: 'LOCAL']
+  isActive boolean [not null, default: true]
   createdAt timestamp [not null]
   updatedAt timestamp [not null]
+}
+
+Table Role {
+  id uuid [pk]
+  name varchar [not null, unique] // e.g. ADMIN, MODERATOR, USER
+}
+
+Table UserRole {
+  userId uuid [not null]
+  roleId uuid [not null]
+
+  indexes {
+    (userId, roleId) [pk]
+  }
+}
+
+Table RefreshToken {
+  id uuid [pk]
+  token varchar [not null, unique] // hashed token stored here
+  userId uuid [not null]
+  expiresAt timestamp [not null]
+  createdAt timestamp [not null]
 }
 
 Table FriendRequest {
@@ -199,6 +229,10 @@ Table RoomCommentLike {
     (commentId, userId) [unique]
   }
 }
+
+Ref: UserRole.userId > User.id
+Ref: UserRole.roleId > Role.id
+Ref: RefreshToken.userId > User.id
 
 Ref: FriendRequest.senderId > User.id
 Ref: FriendRequest.receiverId > User.id
