@@ -72,7 +72,7 @@ export class ReadingSessionService {
     const session = await this.prisma.$transaction(async (tx) => {
       const created = await tx.readingSession.create({
         data: {
-          readingTracker: { connect: { id: tracker.id } },
+          tracker: { connect: { id: tracker.id } },
           trackedAt: now,
           startPage: dto.startPage,
           endPage: dto.endPage,
