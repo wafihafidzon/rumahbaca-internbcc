@@ -20,6 +20,8 @@ import {
   UserWithRolesRelations,
   mapUserRoles,
 } from '../common/types/user.types';
+import { UserSearchQueryDto } from './dto/user-search-query.dto';
+import { UserSearchItemDto } from './dto/user-search-response.dto';
 
 const USER_CACHE_PREFIX = 'users';
 
@@ -238,5 +240,62 @@ export class UserService {
     this.logger.log(`Avatar uploaded for user: ${id}`, 'UserService');
     await this.invalidateUserCache(id);
     return this.toUserResponseDto(updated);
+  }
+
+  async search(currentUserId: string, query: UserSearchQueryDto) {
+    const { q, page = 1, limit = 10 } = query;
+    const skip = (page - 1) * limit;
+    const { users, total } = await this.userRepository.searchUsers(
+      currentUserId,
+      q,
+      skip,
+      limit,
+    );
+
+    const data: UserSearchItemDto[] = await Promise.all(
+      users.map(async (user) => {
+        const friendship = await this.userRepository.findFriendship(
+          currentUserId,
+          user.id,
+        );
+
+        if (friendship) {
+          return { ...user, relationshipStatus: 'friends' as const };
+        }
+
+        const sentRequest = await this.userRepository.findPendingSentRequest(
+          currentUserId,
+          user.id,
+        );
+
+        if (sentRequest) {
+          return { ...user, relationshipStatus: 'request_sent' as const };
+        }
+
+        const receivedRequest =
+          await this.userRepository.findPendingSentRequest(
+            user.id,
+            currentUserId,
+          );
+
+        if (receivedRequest) {
+          return { ...user, relationshipStatus: 'request_received' as const };
+        }
+
+        return { ...user, relationshipStatus: 'none' as const };
+      }),
+    );
+
+    const totalPages = Math.ceil(total / limit);
+    const meta: PaginationMetaDto = {
+      page,
+      limit,
+      total,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    };
+
+    return { data, meta };
   }
 }
