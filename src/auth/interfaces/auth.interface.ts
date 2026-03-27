@@ -1,29 +1,10 @@
-import {
-  User,
-  Role,
-  Permission,
-  UserRole,
-  RolePermission,
-  UserPermission,
-} from '@prisma/client';
+import { User } from '@prisma/client';
 import { Request } from 'express';
-
-export type UserWithAclRelations = User & {
-  roles: (UserRole & {
-    role: Role & {
-      permissions: (RolePermission & {
-        permission: Permission;
-      })[];
-    };
-  })[];
-  permissions: (UserPermission & {
-    permission: Permission;
-  })[];
-};
+import type { UserWithRoles } from '../../common/types/user.types';
+export type { UserWithRoles };
 
 export type AuthUser = Pick<User, 'id' | 'email' | 'username'> & {
   roles: string[];
-  permissions: string[];
 };
 
 export interface JwtPayload {
@@ -31,7 +12,13 @@ export interface JwtPayload {
   email: string;
   username: string;
   roles: string[];
-  permissions: string[];
+}
+
+export interface GoogleAuthUser {
+  googleId: string;
+  email: string;
+  name: string;
+  avatarUrl?: string | null;
 }
 
 export interface LoginResponse {
@@ -40,18 +27,12 @@ export interface LoginResponse {
   user: AuthUser;
 }
 
-export type UserWithAcl = User & {
-  roles: string[];
-  permissions: string[];
-};
-
-export interface UserListResponseDto {
-  data: UserWithAcl[];
-  meta: any;
-}
-
 export interface RequestWithUser extends Request {
   user: JwtPayload;
+}
+
+export interface RequestWithGoogleUser extends Request {
+  user: GoogleAuthUser;
 }
 
 export interface RequestWithCookies extends Request {

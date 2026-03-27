@@ -30,14 +30,6 @@ export class AuthUserResponseDto {
   })
   @Expose()
   roles: string[];
-
-  @ApiProperty({
-    example: ['index-user'],
-    description: 'The permissions of the user',
-    type: [String],
-  })
-  @Expose()
-  permissions: string[];
 }
 
 export class AuthResponseDto {

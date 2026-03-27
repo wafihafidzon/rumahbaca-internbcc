@@ -16,19 +16,15 @@ export class UserResponseDto {
 
   @ApiProperty({ required: false })
   @Expose()
-  firstName: string | null;
-
-  @ApiProperty({ required: false })
-  @Expose()
-  lastName: string | null;
+  name: string;
 
   @ApiProperty({ type: [String], example: ['USER'] })
   @Expose()
   roles: string[];
 
-  @ApiProperty({ type: [String], example: ['index-user'] })
+  @ApiProperty({ required: false })
   @Expose()
-  permissions: string[];
+  bio: string | null;
 
   @ApiProperty()
   @Expose()

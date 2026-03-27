@@ -11,6 +11,12 @@ export interface AppConfig {
     refreshExpiration: StringValue;
   };
 
+  google: {
+    googleClientId: string;
+    googleClientSecret: string;
+    googleCallbackUrl: string;
+  };
+
   redis: {
     host: string;
     port: number;
@@ -71,6 +77,13 @@ export default registerAs('app', () => ({
     refreshSecret: process.env.JWT_REFRESH_SECRET,
     refreshExpiration: (process.env.JWT_REFRESH_EXPIRATION ??
       '7d') as StringValue,
+  },
+  google: {
+    googleClientId: process.env.GOOGLE_CLIENT_ID ?? '',
+    googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+    googleCallbackUrl:
+      process.env.GOOGLE_CALLBACK_URL ??
+      'http://localhost:3001/auth/google/callback',
   },
   redis: {
     host: process.env.REDIS_HOST,

@@ -17,9 +17,9 @@ import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 import { Prisma } from '@prisma/client';
 import {
-  UserWithAcl,
-  UserWithAclRelations,
-} from '../auth/interfaces/auth.interface';
+  UserWithRolesRelations,
+  mapUserRoles,
+} from '../common/types/user.types';
 
 const USER_CACHE_PREFIX = 'users';
 
@@ -51,8 +51,8 @@ export class UserService {
     this.logger.debug(`Cache invalidated for user: ${userId}`, 'UserService');
   }
 
-  private toUserResponseDto(user: UserWithAclRelations): UserResponseDto {
-    const mappedUser = this.mapUserAcl(user);
+  private toUserResponseDto(user: UserWithRolesRelations): UserResponseDto {
+    const mappedUser = mapUserRoles(user);
     const result = plainToInstance(UserResponseDto, mappedUser, {
       excludeExtraneousValues: true,
     });
@@ -60,25 +60,6 @@ export class UserService {
       result.avatarUrl = this.storage.getUrl(result.avatarUrl);
     }
     return result;
-  }
-
-  private mapUserAcl(user: UserWithAclRelations): UserWithAcl {
-    const roles = user.roles.map((ur) => ur.role.name);
-    const rolePermissions = user.roles.flatMap(
-      (ur) => ur.role.permissions?.map((rp) => rp.permission.name) || [],
-    );
-    const directPermissions =
-      user.permissions?.map((up) => up.permission.name) || [];
-
-    const permissions = [
-      ...new Set([...rolePermissions, ...directPermissions]),
-    ];
-
-    return {
-      ...user,
-      roles,
-      permissions,
-    };
   }
 
   async findAll(query: UserQueryDto): Promise<UserListResponseDto> {
@@ -97,8 +78,7 @@ export class UserService {
         OR: [
           { username: { contains: search, mode: 'insensitive' } },
           { email: { contains: search, mode: 'insensitive' } },
-          { firstName: { contains: search, mode: 'insensitive' } },
-          { lastName: { contains: search, mode: 'insensitive' } },
+          { name: { contains: search, mode: 'insensitive' } },
         ],
       }),
       ...(isActive !== undefined && { isActive }),
@@ -166,6 +146,7 @@ export class UserService {
     const user = await this.userRepository.createUser({
       ...userData,
       password: hashedPassword,
+      provider: 'LOCAL',
       roles: roles?.length
         ? {
             create: roles.map((roleName) => ({

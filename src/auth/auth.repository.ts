@@ -1,71 +1,62 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RefreshToken } from '@prisma/client';
-import { UserWithAclRelations } from './interfaces/auth.interface';
+import { UserWithRolesRelations } from '../common/types/user.types';
+
+const userRoleInclude = {
+  roles: {
+    include: {
+      role: true,
+    },
+  },
+} as const;
 
 @Injectable()
 export class AuthRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  private readonly userAclInclude = {
-    roles: {
-      include: {
-        role: {
-          include: {
-            permissions: {
-              include: {
-                permission: true,
-              },
-            },
-          },
-        },
-      },
-    },
-    permissions: {
-      include: {
-        permission: true,
-      },
-    },
-  };
-
   // ─── User ─────────────────────────────────────────────────────────────────
 
-  async findUserByEmailWithAcl(
+  async findUserByEmailWithRoles(
     email: string,
-  ): Promise<UserWithAclRelations | null> {
-    return (await this.prisma.user.findUnique({
+  ): Promise<UserWithRolesRelations | null> {
+    return await this.prisma.user.findUnique({
       where: { email },
-      include: this.userAclInclude,
-    })) as UserWithAclRelations | null;
+      include: userRoleInclude,
+    });
   }
 
-  async findUserByIdWithAcl(id: string): Promise<UserWithAclRelations | null> {
-    return (await this.prisma.user.findUnique({
+  async findUserByIdWithRoles(
+    id: string,
+  ): Promise<UserWithRolesRelations | null> {
+    return await this.prisma.user.findUnique({
       where: { id },
-      include: this.userAclInclude,
-    })) as UserWithAclRelations | null;
+      include: userRoleInclude,
+    });
   }
 
   async findUserByEmailOrUsername(
     email: string,
     username: string,
-  ): Promise<UserWithAclRelations | null> {
-    return (await this.prisma.user.findFirst({
+  ): Promise<UserWithRolesRelations | null> {
+    return await this.prisma.user.findFirst({
       where: {
         OR: [{ email }, { username }],
       },
-      include: this.userAclInclude,
-    })) as UserWithAclRelations | null;
+      include: userRoleInclude,
+    });
   }
 
   async createUser(data: {
     email: string;
     username: string;
-    password: string;
-    firstName?: string;
-    lastName?: string;
-  }): Promise<UserWithAclRelations> {
-    return (await this.prisma.user.create({
+    name: string;
+    password?: string;
+    avatarUrl?: string;
+    provider?: 'LOCAL' | 'GOOGLE';
+    googleId?: string;
+  }): Promise<UserWithRolesRelations> {
+    return await this.prisma.user.create({
       data: {
         ...data,
         roles: {
@@ -76,8 +67,50 @@ export class AuthRepository {
           },
         },
       },
-      include: this.userAclInclude,
-    })) as UserWithAclRelations;
+      include: userRoleInclude,
+    });
+  }
+
+  async upsertGoogleUser(data: {
+    googleId: string;
+    email: string;
+    name: string;
+    avatarUrl?: string | null;
+  }): Promise<UserWithRolesRelations> {
+    const existingByGoogleId = await this.prisma.user.findUnique({
+      where: { googleId: data.googleId },
+      include: userRoleInclude,
+    });
+    if (existingByGoogleId) {
+      return existingByGoogleId;
+    }
+
+    const existingByEmail = await this.prisma.user.findUnique({
+      where: { email: data.email },
+      include: userRoleInclude,
+    });
+
+    if (existingByEmail) {
+      return await this.prisma.user.update({
+        where: { id: existingByEmail.id },
+        data: {
+          googleId: data.googleId,
+          provider: 'GOOGLE',
+          name: data.name || existingByEmail.name,
+          avatarUrl: data.avatarUrl ?? existingByEmail.avatarUrl,
+        },
+        include: userRoleInclude,
+      });
+    }
+
+    return await this.createUser({
+      email: data.email,
+      username: data.email.split('@')[0],
+      name: data.name,
+      avatarUrl: data.avatarUrl ?? undefined,
+      googleId: data.googleId,
+      provider: 'GOOGLE',
+    });
   }
 
   // ─── Refresh Token ─────────────────────────────────────────────────────────

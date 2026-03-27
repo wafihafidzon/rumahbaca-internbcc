@@ -16,7 +16,6 @@ import { RedisModule, REDIS_CLIENT } from './common/redis/redis.module';
 import { HybridThrottlerStorage } from './common/throttler/hybrid-throttler-storage';
 import Redis from 'ioredis';
 import { HealthModule } from './common/health/health.module';
-import { PostModule } from './post/post.module';
 import { StorageModule } from './common/storage/storage.module';
 import { UserModule } from './user/user.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
@@ -66,7 +65,6 @@ import { APP_GUARD, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
     RedisModule,
     CacheModule,
     HealthModule,
-    PostModule,
     StorageModule,
     UserModule,
     MetricsModule,

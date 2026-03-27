@@ -25,15 +25,15 @@ export class CreateUserDto {
   @MinLength(6)
   password: string;
 
-  @ApiProperty({ example: 'John', required: false })
+  @ApiProperty({ example: 'John Doe' })
   @IsString()
-  @IsOptional()
-  firstName?: string;
+  @IsNotEmpty()
+  name: string;
 
-  @ApiProperty({ example: 'Doe', required: false })
+  @ApiProperty({ example: 'Book enthusiast', required: false })
   @IsString()
   @IsOptional()
-  lastName?: string;
+  bio?: string;
 
   @ApiProperty({
     example: ['USER'],

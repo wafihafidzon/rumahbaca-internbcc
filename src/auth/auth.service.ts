@@ -11,13 +11,13 @@ import ms from 'ms';
 import { AppConfigService } from '../config/app-config.service';
 import type {
   AuthUser,
+  GoogleAuthUser,
   JwtPayload,
   LoginResponse,
-  UserWithAclRelations,
-  UserWithAcl,
 } from './interfaces/auth.interface';
 import { RegisterDto } from './dto/register.dto';
 import { AuthRepository } from './auth.repository';
+import { UserWithRoles, mapUserRoles } from '../common/types/user.types';
 
 @Injectable()
 export class AuthService {
@@ -28,8 +28,8 @@ export class AuthService {
     private readonly appConfig: AppConfigService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<UserWithAcl> {
-    const user = await this.getUserWithAclByEmail(email);
+  async validateUser(email: string, password: string): Promise<UserWithRoles> {
+    const user = await this.getUserWithRolesByEmail(email);
 
     if (!user) {
       this.logger.warn(
@@ -44,6 +44,12 @@ export class AuthService {
       throw new UnauthorizedException('User account is inactive');
     }
 
+    if (!user.password) {
+      throw new UnauthorizedException(
+        'This account uses Google sign in. Please use Google login.',
+      );
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       this.logger.warn(`Failed to login attempt for user: ${email}`, 'Auth');
@@ -55,34 +61,16 @@ export class AuthService {
     return user;
   }
 
-  async getUserWithAclByEmail(email: string): Promise<UserWithAcl | null> {
-    const user = await this.authRepository.findUserByEmailWithAcl(email);
+  async getUserWithRolesByEmail(email: string): Promise<UserWithRoles | null> {
+    const user = await this.authRepository.findUserByEmailWithRoles(email);
     if (!user) return null;
-    return this.mapUserAcl(user);
+    return mapUserRoles(user);
   }
 
-  async getUserWithAclById(id: string): Promise<UserWithAcl | null> {
-    const user = await this.authRepository.findUserByIdWithAcl(id);
+  async getUserWithRolesById(id: string): Promise<UserWithRoles | null> {
+    const user = await this.authRepository.findUserByIdWithRoles(id);
     if (!user) return null;
-    return this.mapUserAcl(user);
-  }
-
-  private mapUserAcl(user: UserWithAclRelations): UserWithAcl {
-    const roles = user.roles.map((ur) => ur.role.name);
-    const rolePermissions = user.roles.flatMap((ur) =>
-      ur.role.permissions.map((rp) => rp.permission.name),
-    );
-    const directPermissions = user.permissions.map((up) => up.permission.name);
-
-    const permissions = [
-      ...new Set([...rolePermissions, ...directPermissions]),
-    ];
-
-    return {
-      ...user,
-      roles,
-      permissions,
-    };
+    return mapUserRoles(user);
   }
 
   async login(user: AuthUser): Promise<LoginResponse> {
@@ -91,13 +79,9 @@ export class AuthService {
       email: user.email,
       username: user.username,
       roles: user.roles,
-      permissions: user.permissions,
     };
 
-    const accessToken = this.jwtService.sign(payload, {
-      secret: this.appConfig.jwt.secret,
-      expiresIn: this.appConfig.jwt.expiration,
-    });
+    const accessToken = this.jwtService.sign(payload);
 
     const refreshToken = this.jwtService.sign(payload, {
       secret: this.appConfig.jwt.refreshSecret,
@@ -154,7 +138,7 @@ export class AuthService {
         throw new UnauthorizedException('Refresh token expired or invalid');
       }
 
-      const user = await this.getUserWithAclById(payload.sub);
+      const user = await this.getUserWithRolesById(payload.sub);
 
       if (!user || !user.isActive) {
         throw new UnauthorizedException('User not found or inactive');
@@ -165,13 +149,9 @@ export class AuthService {
         email: user.email,
         username: user.username,
         roles: user.roles,
-        permissions: user.permissions,
       };
 
-      const newAccessToken = this.jwtService.sign(newPayload, {
-        secret: this.appConfig.jwt.secret,
-        expiresIn: this.appConfig.jwt.expiration,
-      });
+      const newAccessToken = this.jwtService.sign(newPayload);
 
       this.logger.debug(
         `Token refreshed successfully for: ${user.email}`,
@@ -195,7 +175,7 @@ export class AuthService {
   }
 
   async register(data: RegisterDto): Promise<AuthUser> {
-    const { email, password, username, firstName, lastName } = data;
+    const { email, password, username, name } = data;
 
     const existingUser = await this.authRepository.findUserByEmailOrUsername(
       email,
@@ -213,21 +193,31 @@ export class AuthService {
     const user = await this.authRepository.createUser({
       email,
       username,
+      name,
       password: hashedPassword,
-      firstName,
-      lastName,
+      provider: 'LOCAL',
     });
 
     this.logger.log(`User registered: ${email}`, 'Auth');
 
-    const mappedUser = this.mapUserAcl(user);
+    const mappedUser = mapUserRoles(user);
 
     return {
       id: mappedUser.id,
       email: mappedUser.email,
       username: mappedUser.username,
       roles: mappedUser.roles,
-      permissions: mappedUser.permissions,
     };
+  }
+
+  async googleLogin(googleUser: GoogleAuthUser): Promise<LoginResponse> {
+    const user = await this.authRepository.upsertGoogleUser(googleUser);
+    const mappedUser = mapUserRoles(user);
+    return this.login({
+      id: mappedUser.id,
+      email: mappedUser.email,
+      username: mappedUser.username,
+      roles: mappedUser.roles,
+    });
   }
 }
