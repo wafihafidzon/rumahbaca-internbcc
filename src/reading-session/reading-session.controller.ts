@@ -21,7 +21,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth-guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { JwtPayload } from '../auth/interfaces/auth.interface';
+import type { JwtPayload } from '../auth/interfaces/auth.interface';
 import { CreateReadingSessionDto } from './dto/create-reading-session.dto';
 import { ReadingSessionQueryDto } from './dto/reading-session-query.dto';
 import {

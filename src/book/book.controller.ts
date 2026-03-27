@@ -19,7 +19,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { ROLES } from '../auth/constants/acl.constant';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { JwtPayload } from '../auth/interfaces/auth.interface';
+import type { JwtPayload } from '../auth/interfaces/auth.interface';
 import { BookService } from './book.service';
 import { CreateBookDto } from './dto/create-book.dto';
 import { BookQueryDto } from './dto/book-query.dto';

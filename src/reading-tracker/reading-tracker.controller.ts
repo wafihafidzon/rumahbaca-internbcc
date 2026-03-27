@@ -22,7 +22,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth-guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { JwtPayload } from '../auth/interfaces/auth.interface';
+import type { JwtPayload } from '../auth/interfaces/auth.interface';
 import { CreateReadingTrackerDto } from './dto/create-reading-tracker.dto';
 import { ReadingTrackerQueryDto } from './dto/reading-tracker-query.dto';
 import {
