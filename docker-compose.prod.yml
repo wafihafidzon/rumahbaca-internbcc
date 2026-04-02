@@ -1,0 +1,15 @@
+services:
+  wafi_be:
+    build: .
+    container_name: wafi_be
+    restart: always
+    ports:
+      - "127.0.0.1:3001:3000"
+    env_file:
+      - .env.app
+    networks:
+      - postgres_network
+
+networks:
+  postgres_network:
+    external: true
