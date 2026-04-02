@@ -51,7 +51,7 @@ async function bootstrap() {
 
   if (configService.env.enableSwagger) {
     const config = new DocumentBuilder()
-      .setTitle('NestJS Boilerplate API')
+      .setTitle('RumahBaca API NestJS')
       .setDescription(packageJson.description)
       .setVersion(packageJson.version)
       .addBearerAuth()
